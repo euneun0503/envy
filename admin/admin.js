@@ -46,7 +46,10 @@ const Store = {
   sha: {},
   token: "",
   async gh(path, opt = {}) {
-    const res = await fetch(`https://api.github.com/repos/${CFG.repo}/${path}`, Object.assign({}, opt, {
+    return this._gh(path, opt).catch((e) => { if (e instanceof TypeError) throw new Error("GitHub에 연결하지 못했어요. 인터넷 연결을 확인하거나, 광고 차단 확장 프로그램을 잠시 끄고 다시 시도해 주세요."); throw e; });
+  },
+  async _gh(path, opt = {}) {
+    const res = await fetch(`https://api.github.com/repos/${CFG.repo}${path ? "/" + path : ""}`, Object.assign({}, opt, {
       headers: Object.assign({ "Authorization": `Bearer ${this.token}`, "Accept": "application/vnd.github+json" }, opt.headers || {})
     }));
     if (res.status === 401) throw new Error("GitHub 토큰이 만료됐거나 올바르지 않아요. 다시 로그인해 주세요.");
@@ -693,7 +696,7 @@ function login(msg = "") {
   $("#tok").focus();
   $("#gate").onsubmit = async (e) => {
     e.preventDefault();
-    Store.token = $("#tok").value.trim();
+    Store.token = $("#tok").value.replace(/[^\x21-\x7e]/g, "");
     $("#err").textContent = "확인하는 중…";
     try { await Store.check(); LS.set("envy_gh_token", Store.token, $("#keep").checked); boot(); }
     catch (err) { $("#err").textContent = err.message; }
