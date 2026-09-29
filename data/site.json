@@ -1,0 +1,43 @@
+{
+  "company": "ENVY",
+  "tagline": "식품 포장 비닐 · 파우치",
+  "phone": "02-000-0000",
+  "email": "envy2927@gmail.com",
+  "inquiry_endpoint": "",
+  "inquiry_email": "envy2927@gmail.com",
+  "inquiry_cc": [
+    "naoky0503@gmail.com"
+  ],
+  "hours": "평일 09:00 – 18:00",
+  "lunch": "12:00 – 13:00",
+  "closed": "토·일·공휴일",
+  "ceo": "000",
+  "bizno": "000-00-00000",
+  "salesno": "-",
+  "privacy": "000",
+  "address": "주소 입력",
+  "keywords": [
+    "빵봉투",
+    "지퍼스탠드",
+    "크라프트파우치",
+    "진공포장"
+  ],
+  "strengths": [
+    {
+      "title": "소량 인쇄 상담",
+      "desc": "무동판 디지털 인쇄 가능"
+    },
+    {
+      "title": "무지 샘플 제공",
+      "desc": "원단·사이즈 먼저 확인"
+    },
+    {
+      "title": "동판 무상 보관",
+      "desc": "재주문 시 동판비 없음"
+    },
+    {
+      "title": "식품용 원단",
+      "desc": "식품 접촉 기준 소재 사용"
+    }
+  ]
+}

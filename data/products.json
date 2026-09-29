@@ -1,0 +1,658 @@
+{
+  "items": [
+    {
+      "show": true,
+      "category": "bread",
+      "name": "OPP 빵봉투 테이프형 로고 인쇄",
+      "spec": "OPP 30–40μm · 식빵/바게트/쿠키",
+      "moq": "소량 상담",
+      "tags": [
+        "접착테이프",
+        "1~2도"
+      ],
+      "badges": [
+        "BEST"
+      ],
+      "best": true,
+      "image": "https://images.pexels.com/photos/9226672/pexels-photo-9226672.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "bread"
+    },
+    {
+      "show": true,
+      "category": "bread",
+      "name": "OPP 무접착 개별 포장 봉투",
+      "spec": "OPP 30μm · 쿠키·마카롱 개별",
+      "moq": "소량 상담",
+      "tags": [
+        "무접착",
+        "풀컬러"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "https://images.pexels.com/photos/9673514/pexels-photo-9673514.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "bread"
+    },
+    {
+      "show": true,
+      "category": "bread",
+      "name": "식빵 이방 사이드 게세트 봉투",
+      "spec": "OPP·CPP · 옆폭 포함",
+      "moq": "상담",
+      "tags": [
+        "옆폭",
+        "타이 마감"
+      ],
+      "badges": [
+        "NEW"
+      ],
+      "best": false,
+      "image": "https://images.pexels.com/photos/20008782/pexels-photo-20008782.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "gusset"
+    },
+    {
+      "show": true,
+      "category": "bread",
+      "name": "CPP 떡·디저트 포장 봉투",
+      "spec": "CPP 40μm · 투명도 높음",
+      "moq": "상담",
+      "tags": [
+        "열접착",
+        "풀컬러"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "flat"
+    },
+    {
+      "show": true,
+      "category": "pouch",
+      "name": "투명 스탠드 지퍼 파우치",
+      "spec": "PET 12 / LLDPE 70",
+      "moq": "소량 상담",
+      "tags": [
+        "지퍼",
+        "투명"
+      ],
+      "badges": [
+        "BEST"
+      ],
+      "best": true,
+      "image": "https://images.pexels.com/photos/12024976/pexels-photo-12024976.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "pouch"
+    },
+    {
+      "show": true,
+      "category": "pouch",
+      "name": "크라프트 투명창 스탠드 파우치",
+      "spec": "KRAFT / VMPET / LLDPE",
+      "moq": "소량 상담",
+      "tags": [
+        "투명창",
+        "무광"
+      ],
+      "badges": [
+        "HOT"
+      ],
+      "best": true,
+      "image": "https://images.pexels.com/photos/14502287/pexels-photo-14502287.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "kraft"
+    },
+    {
+      "show": true,
+      "category": "pouch",
+      "name": "알루미늄 원두·분말 파우치",
+      "spec": "PET 12 / AL 7 / LLDPE 80",
+      "moq": "상담",
+      "tags": [
+        "고차단",
+        "아로마밸브"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "https://images.pexels.com/photos/12024938/pexels-photo-12024938.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "alu"
+    },
+    {
+      "show": true,
+      "category": "pouch",
+      "name": "무광 화이트 지퍼 스탠드",
+      "spec": "MATT OPP / VMPET / LLDPE",
+      "moq": "상담",
+      "tags": [
+        "무광",
+        "하단컬러"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "https://images.pexels.com/photos/18138946/pexels-photo-18138946.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "pouch"
+    },
+    {
+      "show": true,
+      "category": "vacuum",
+      "name": "나일론 진공 포장 봉투",
+      "spec": "NY 15 / LLDPE 60–80",
+      "moq": "소량 상담",
+      "tags": [
+        "진공",
+        "핀홀 강함"
+      ],
+      "badges": [
+        "BEST"
+      ],
+      "best": true,
+      "image": "https://images.pexels.com/photos/21582446/pexels-photo-21582446.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "vacuum"
+    },
+    {
+      "show": true,
+      "category": "vacuum",
+      "name": "삼방 실링 반찬 봉투",
+      "spec": "PET / LLDPE",
+      "moq": "상담",
+      "tags": [
+        "삼방",
+        "노치"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "https://images.pexels.com/photos/4929705/pexels-photo-4929705.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "flat"
+    },
+    {
+      "show": true,
+      "category": "vacuum",
+      "name": "냉동 식품 포장 봉투",
+      "spec": "NY / LLDPE (내한)",
+      "moq": "상담",
+      "tags": [
+        "냉동",
+        "풀컬러"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "flat"
+    },
+    {
+      "show": true,
+      "category": "vacuum",
+      "name": "정육·수산 진공 봉투",
+      "spec": "NY / LLDPE 80",
+      "moq": "상담",
+      "tags": [
+        "진공",
+        "1도"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "https://images.pexels.com/photos/7163991/pexels-photo-7163991.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "vacuum"
+    },
+    {
+      "show": true,
+      "category": "retort",
+      "name": "국·탕 레토르트 파우치",
+      "spec": "PET / AL / RCPP",
+      "moq": "상담",
+      "tags": [
+        "120℃ 살균"
+      ],
+      "badges": [
+        "HOT"
+      ],
+      "best": true,
+      "image": "https://images.pexels.com/photos/6995260/pexels-photo-6995260.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "retort"
+    },
+    {
+      "show": true,
+      "category": "retort",
+      "name": "소스 스파우트 파우치",
+      "spec": "PET / NY / LLDPE",
+      "moq": "상담",
+      "tags": [
+        "스파우트",
+        "액체"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "spout"
+    },
+    {
+      "show": true,
+      "category": "retort",
+      "name": "전자레인지 투명 레토르트",
+      "spec": "PET / NY / RCPP",
+      "moq": "상담",
+      "tags": [
+        "투명",
+        "전자레인지"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "retort"
+    },
+    {
+      "show": true,
+      "category": "retort",
+      "name": "즉석밥·죽 삼방 파우치",
+      "spec": "PET / AL / CPP",
+      "moq": "상담",
+      "tags": [
+        "고온",
+        "노치"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "flat"
+    },
+    {
+      "show": true,
+      "category": "roll",
+      "name": "필로우 포장기용 인쇄 롤필름",
+      "spec": "OPP / CPP · 아이마크",
+      "moq": "상담",
+      "tags": [
+        "자동포장",
+        "폭 맞춤"
+      ],
+      "badges": [
+        "BEST"
+      ],
+      "best": false,
+      "image": "https://images.pexels.com/photos/10114270/pexels-photo-10114270.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "roll"
+    },
+    {
+      "show": true,
+      "category": "roll",
+      "name": "스틱 포장 롤필름",
+      "spec": "PET / AL / PE",
+      "moq": "상담",
+      "tags": [
+        "분말·액상"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "stick"
+    },
+    {
+      "show": true,
+      "category": "roll",
+      "name": "뚜껑 실링 필름 (리드필름)",
+      "spec": "PET / 이지필",
+      "moq": "상담",
+      "tags": [
+        "컵·용기"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "roll"
+    },
+    {
+      "show": true,
+      "category": "roll",
+      "name": "수축 라벨 필름",
+      "spec": "PETG · 병·용기",
+      "moq": "상담",
+      "tags": [
+        "수축",
+        "풀컬러"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "roll"
+    },
+    {
+      "show": true,
+      "category": "band",
+      "name": "도시락·떡 포장 종이 띠지",
+      "spec": "백상지·아트지 150–250g · 풀컬러",
+      "moq": "소량 상담",
+      "tags": [
+        "띠지",
+        "풀컬러"
+      ],
+      "badges": [
+        "BEST"
+      ],
+      "best": false,
+      "image": "",
+      "icon": "band"
+    },
+    {
+      "show": true,
+      "category": "band",
+      "name": "선물세트 고급 밴딩",
+      "spec": "랑데뷰·스노우지 · 금박 가능",
+      "moq": "상담",
+      "tags": [
+        "후가공",
+        "금박"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "https://images.pexels.com/photos/6334692/pexels-photo-6334692.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "band"
+    },
+    {
+      "show": true,
+      "category": "band",
+      "name": "OPP 투명 밴딩 필름",
+      "spec": "OPP · 접착 마감",
+      "moq": "상담",
+      "tags": [
+        "투명",
+        "방수"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "band"
+    },
+    {
+      "show": true,
+      "category": "band",
+      "name": "크라프트 밴딩 라벨",
+      "spec": "크라프트지 · 1~2도",
+      "moq": "소량 상담",
+      "tags": [
+        "크라프트",
+        "친환경"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "band"
+    },
+    {
+      "show": true,
+      "category": "sticker",
+      "name": "원형 로고 스티커",
+      "spec": "아트지 유광·무광 코팅 · 도무송",
+      "moq": "소량 상담",
+      "tags": [
+        "원형",
+        "로고"
+      ],
+      "badges": [
+        "BEST"
+      ],
+      "best": true,
+      "image": "https://images.pexels.com/photos/2783837/pexels-photo-2783837.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "sticker"
+    },
+    {
+      "show": true,
+      "category": "sticker",
+      "name": "유포지 방수 스티커",
+      "spec": "유포지 · 냉장·냉동 제품용",
+      "moq": "소량 상담",
+      "tags": [
+        "방수",
+        "냉장"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "sticker"
+    },
+    {
+      "show": true,
+      "category": "sticker",
+      "name": "투명 스티커",
+      "spec": "투명 PP·PET · 화이트 인쇄",
+      "moq": "상담",
+      "tags": [
+        "투명",
+        "화이트"
+      ],
+      "badges": [
+        "NEW"
+      ],
+      "best": false,
+      "image": "",
+      "icon": "sticker"
+    },
+    {
+      "show": true,
+      "category": "sticker",
+      "name": "식품 표시사항 롤 라벨",
+      "spec": "아트지·유포지 롤 · 라벨기용",
+      "moq": "상담",
+      "tags": [
+        "표시사항",
+        "롤라벨"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "https://images.pexels.com/photos/1111319/pexels-photo-1111319.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "sticker"
+    },
+    {
+      "show": true,
+      "category": "sleeve",
+      "name": "도시락·용기 종이 슬리브",
+      "spec": "아이보리·마닐라 250–350g",
+      "moq": "소량 상담",
+      "tags": [
+        "슬리브",
+        "풀컬러"
+      ],
+      "badges": [
+        "HOT"
+      ],
+      "best": false,
+      "image": "",
+      "icon": "sleeve"
+    },
+    {
+      "show": true,
+      "category": "sleeve",
+      "name": "PET 투명 슬리브 케이스",
+      "spec": "PET 0.3–0.5mm · 인쇄 가능",
+      "moq": "상담",
+      "tags": [
+        "투명",
+        "케이스"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "sleeve"
+    },
+    {
+      "show": true,
+      "category": "sleeve",
+      "name": "서랍형 슬리브 박스",
+      "spec": "아트지 + 내함 · 코팅",
+      "moq": "상담",
+      "tags": [
+        "서랍형",
+        "선물"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "sleeve"
+    },
+    {
+      "show": true,
+      "category": "sleeve",
+      "name": "컵 홀더 슬리브",
+      "spec": "크라프트·백색 · 1~2도",
+      "moq": "소량 상담",
+      "tags": [
+        "카페",
+        "컵홀더"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "https://images.pexels.com/photos/5301701/pexels-photo-5301701.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "sleeve"
+    },
+    {
+      "show": true,
+      "category": "box",
+      "name": "쿠키·디저트 단상자",
+      "spec": "아이보리 350g · 무광 코팅",
+      "moq": "소량 상담",
+      "tags": [
+        "단상자",
+        "풀컬러"
+      ],
+      "badges": [
+        "BEST"
+      ],
+      "best": true,
+      "image": "https://images.pexels.com/photos/5725859/pexels-photo-5725859.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "box"
+    },
+    {
+      "show": true,
+      "category": "box",
+      "name": "케이크·빵 창문 상자",
+      "spec": "마닐라 · PET 창",
+      "moq": "상담",
+      "tags": [
+        "창문형",
+        "베이커리"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "box"
+    },
+    {
+      "show": true,
+      "category": "box",
+      "name": "택배 골판지 박스 인쇄",
+      "spec": "E골·B골 · 1~2도",
+      "moq": "상담",
+      "tags": [
+        "택배",
+        "골판지"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "https://images.pexels.com/photos/9594423/pexels-photo-9594423.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "box"
+    },
+    {
+      "show": true,
+      "category": "box",
+      "name": "선물세트 싸바리 박스",
+      "spec": "하드보드 + 인쇄지 · 자석 뚜껑",
+      "moq": "상담",
+      "tags": [
+        "고급",
+        "선물세트"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "https://images.pexels.com/photos/3927238/pexels-photo-3927238.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "box"
+    },
+    {
+      "show": true,
+      "category": "bag",
+      "name": "베이커리 링손잡이 비닐백",
+      "spec": "LDPE · 무광/유광",
+      "moq": "소량 상담",
+      "tags": [
+        "링손잡이",
+        "1~2도"
+      ],
+      "badges": [
+        "BEST"
+      ],
+      "best": false,
+      "image": "",
+      "icon": "bag"
+    },
+    {
+      "show": true,
+      "category": "bag",
+      "name": "테이크아웃 바닥봉투",
+      "spec": "HDPE · 바닥 접힘",
+      "moq": "소량 상담",
+      "tags": [
+        "바닥봉투"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "tbag"
+    },
+    {
+      "show": true,
+      "category": "bag",
+      "name": "배달 포장 비닐봉투",
+      "spec": "HDPE · 옆폭",
+      "moq": "상담",
+      "tags": [
+        "배달",
+        "1도"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "tbag"
+    },
+    {
+      "show": true,
+      "category": "bag",
+      "name": "양줄 복주머니 선물봉투",
+      "spec": "HDPE 하이시보",
+      "moq": "상담",
+      "tags": [
+        "양줄",
+        "선물"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "bag"
+    },
+    {
+      "show": true,
+      "category": "bag",
+      "name": "크라프트 종이 쇼핑백",
+      "spec": "크라프트 120–150g · 꼬임끈",
+      "moq": "소량 상담",
+      "tags": [
+        "종이",
+        "꼬임끈"
+      ],
+      "badges": [
+        "BEST"
+      ],
+      "best": true,
+      "image": "https://images.pexels.com/photos/1992913/pexels-photo-1992913.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "icon": "pbag"
+    },
+    {
+      "show": true,
+      "category": "bag",
+      "name": "화이트 종이 쇼핑백",
+      "spec": "백색 아트지 · 코팅 · 끈 손잡이",
+      "moq": "상담",
+      "tags": [
+        "종이",
+        "고급"
+      ],
+      "badges": [],
+      "best": false,
+      "image": "",
+      "icon": "pbag"
+    }
+  ]
+}

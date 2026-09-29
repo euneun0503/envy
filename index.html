@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ENVY 식품포장</title>
+<meta name="description" content="빵봉투, 스탠드파우치, 진공·레토르트, 밴딩·스티커·슬리브·박스·쇼핑백까지 식품 브랜드 포장 비닐 인쇄 주문제작. 무료 견적 문의.">
+<meta property="og:title" content="ENVY 식품포장">
+<meta property="og:description" content="식품 브랜드 포장 비닐·파우치 인쇄 주문제작. 무료 견적 문의.">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="assets/style.css">
+<!-- 광고 추적 코드(네이버 프리미엄로그분석, 메타 픽셀, 구글 태그)는 이 줄 아래에 붙여넣으세요 -->
+</head>
+<body>
+
+<div class="topnote" id="topnote" hidden>
+  <div class="wrap">
+    <span class="tn-tag">공지</span>
+    <a class="tn-text" id="tn-text" href="#notice"></a>
+    <button type="button" class="tn-close" id="tn-close" aria-label="공지 닫기">×</button>
+  </div>
+</div>
+
+<div class="util">
+  <div class="wrap">
+    <p><span data-site="tagline">식품 포장 비닐 · 파우치</span> <b>인쇄 주문제작</b> 전문</p>
+    <ul><li><a href="#quote">견적문의</a></li><li><a href="#notice">공지사항</a></li><li><a href="#cases">제작사례</a></li><li><a href="#quote">샘플신청</a></li><li><a href="#quote">고객센터</a></li></ul>
+  </div>
+</div>
+
+<div class="head">
+  <div class="wrap">
+    <a class="logo" href="#top"><i aria-hidden="true"></i><span><span data-site="company">ENVY</span><small>FOOD PACKAGING</small></span></a>
+    <div class="search-box">
+      <form class="search" role="search" id="searchForm">
+        <label for="q" style="position:absolute;left:-9999px">품목 검색</label>
+        <input id="q" placeholder="빵봉투, 파우치, 스티커, 박스…">
+        <button type="submit">검색</button>
+      </form>
+      <p class="keywords" id="keywords"></p>
+    </div>
+    <div class="head-cta"><span>견적 상담 전화</span><b data-site="phone">02-000-0000</b></div>
+  </div>
+</div>
+
+<nav class="gnb" aria-label="카테고리">
+  <div class="wrap">
+    <a class="all" href="#products">≡ 전체 품목</a>
+    <a href="#products" data-tab="bread">빵봉투·OPP</a>
+    <a href="#products" data-tab="pouch">스탠드파우치</a>
+    <a href="#products" data-tab="vacuum">진공·삼방</a>
+    <a href="#products" data-tab="retort">레토르트</a>
+    <a href="#products" data-tab="roll">롤필름</a>
+    <a href="#products" data-tab="band">밴딩·띠지</a>
+    <a href="#products" data-tab="sticker">스티커·라벨</a>
+    <a href="#products" data-tab="sleeve">슬리브</a>
+    <a href="#products" data-tab="box">박스</a>
+    <a href="#products" data-tab="bag">쇼핑백</a>
+    <a href="#cases">제작사례</a>
+    <a class="hl" href="#quote">무료견적</a>
+  </div>
+</nav>
+
+<main id="top">
+  <section class="banner" aria-label="프로모션">
+    <div class="slides" id="slides"></div>
+    <button class="arrow prev" id="prev" aria-label="이전 배너">‹</button>
+    <button class="arrow next" id="next" aria-label="다음 배너">›</button>
+    <div class="dots" id="dots"></div>
+  </section>
+
+  <div class="wrap cats">
+    <ul id="cats"></ul>
+  </div>
+
+  <section class="sec" id="best">
+    <div class="wrap">
+      <div class="sec-t"><span class="eyebrow">BEST ITEMS</span><h2>가장 많이 제작하는 품목</h2><p>식품 브랜드들이 많이 찾는 포장, 로고 인쇄로 바로 제작해요</p></div>
+      <div class="grid" id="bestGrid"></div>
+    </div>
+  </section>
+
+  <div class="strip"><div class="wrap" id="strip"></div></div>
+
+  <section class="sec" id="products">
+    <div class="wrap">
+      <div class="sec-t"><span class="eyebrow">PRODUCTS</span><h2>카테고리별 제작 품목</h2><p>포장 형태를 고르면 많이 쓰는 사양을 보여드려요</p></div>
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="grid" id="tabGrid" role="tabpanel"></div>
+    </div>
+  </section>
+
+  <section class="sec" id="cases" style="border-top:1px solid var(--line)">
+    <div class="wrap">
+      <div class="sec-t"><span class="eyebrow">PORTFOLIO</span><h2>제작사례</h2><p>실제 납품한 포장을 사양과 함께 소개해요</p></div>
+      <div class="cases" id="caseGrid"></div>
+      <nav class="pager" id="casePager" aria-label="제작사례 페이지" hidden></nav>
+    </div>
+  </section>
+
+  <section class="sec" id="notice" style="border-top:1px solid var(--line)">
+    <div class="wrap">
+      <div class="sec-t"><span class="eyebrow">NOTICE</span><h2>공지사항</h2><p>휴무, 이벤트, 제작 안내를 알려드려요</p></div>
+      <div class="board" id="board"></div>
+    </div>
+  </section>
+
+  <section class="sec quote" id="quote">
+    <div class="wrap">
+      <div class="sec-t"><span class="eyebrow">CONTACT</span><h2>무료 견적 문의</h2><p>아는 만큼만 적어주세요. 영업일 1일 안에 연락드립니다.</p></div>
+      <div class="quote-box">
+        <aside class="cs">
+          <h3>고객센터</h3>
+          <p class="tel" data-site="phone">02-000-0000</p>
+          <dl>
+            <dt>상담시간</dt><dd data-site="hours">평일 09:00 – 18:00</dd>
+            <dt>점심시간</dt><dd data-site="lunch">12:00 – 13:00</dd>
+            <dt>휴무</dt><dd data-site="closed">토·일·공휴일</dd>
+            <dt>이메일</dt><dd data-site="email">your@email.com</dd>
+          </dl>
+          <p style="font-size:13px;color:var(--muted)">디자인 파일(AI·PDF)이나 제품 사진은 회신 메일에 첨부해 주세요.</p>
+        </aside>
+
+        <form id="quoteForm" novalidate>
+          <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px">
+          <div class="field"><label for="f-company">상호명<span class="req">*</span></label><input id="f-company" name="상호명" required autocomplete="organization" placeholder="예) 달빛베이커리"></div>
+          <div class="field"><label for="f-name">담당자<span class="req">*</span></label><input id="f-name" name="담당자" required autocomplete="name" placeholder="홍길동"></div>
+          <div class="field"><label for="f-phone">연락처<span class="req">*</span></label><input id="f-phone" name="연락처" required type="tel" autocomplete="tel" placeholder="010-0000-0000"></div>
+          <div class="field"><label for="f-email">이메일<span class="req">*</span></label><input id="f-email" name="이메일" required type="email" autocomplete="email" placeholder="견적서 받을 주소"></div>
+          <div class="field full">
+            <span class="legend">포장 형태 (복수 선택)</span>
+            <div class="opts">
+              <label><input type="checkbox" name="포장형태" value="빵봉투/OPP">빵봉투·OPP</label>
+              <label><input type="checkbox" name="포장형태" value="스탠드 지퍼 파우치">스탠드파우치</label>
+              <label><input type="checkbox" name="포장형태" value="삼방/진공">진공·삼방</label>
+              <label><input type="checkbox" name="포장형태" value="레토르트">레토르트</label>
+              <label><input type="checkbox" name="포장형태" value="롤필름">롤필름</label>
+              <label><input type="checkbox" name="포장형태" value="포장 밴딩/띠지">밴딩·띠지</label>
+              <label><input type="checkbox" name="포장형태" value="스티커/라벨">스티커·라벨</label>
+              <label><input type="checkbox" name="포장형태" value="슬리브">슬리브</label>
+              <label><input type="checkbox" name="포장형태" value="박스">박스</label>
+              <label><input type="checkbox" name="포장형태" value="쇼핑백">쇼핑백</label>
+              <label><input type="checkbox" name="포장형태" value="샘플 신청">무지 샘플 신청</label>
+              <label><input type="checkbox" name="포장형태" value="잘 모르겠음">잘 모르겠어요</label>
+            </div>
+          </div>
+          <div class="field"><label for="f-item">담을 제품</label><input id="f-item" name="담을제품" placeholder="예) 식빵 1줄, 그래놀라 300g"></div>
+          <div class="field"><label for="f-size">사이즈 (가로×세로×바닥)</label><input id="f-size" name="사이즈" placeholder="예) 160×240×40mm"></div>
+          <div class="field"><label for="f-qty">제작 수량</label>
+            <select id="f-qty" name="제작수량"><option value="">선택</option><option>1,000매 미만</option><option>1,000~3,000매</option><option>3,000~10,000매</option><option>10,000~50,000매</option><option>50,000매 이상</option><option>미정</option></select></div>
+          <div class="field"><label for="f-print">인쇄</label>
+            <select id="f-print" name="인쇄"><option value="">선택</option><option>무지 (인쇄 없음)</option><option>로고 1~2도</option><option>풀컬러</option><option>디자인부터 필요</option></select></div>
+          <div class="field"><label for="f-date">희망 납기</label><input id="f-date" name="희망납기" placeholder="예) 11월 중순 출시"></div>
+          <div class="field"><label for="f-region">받으실 지역</label><input id="f-region" name="받으실지역" placeholder="예) 경기 성남시"></div>
+          <div class="field full"><label for="f-msg">추가 요청사항</label><textarea id="f-msg" name="요청사항" placeholder="투명창, 지퍼, 하단 컬러, 참고하는 제품 등"></textarea></div>
+          <label class="agree" for="f-agree"><input id="f-agree" type="checkbox" required> [필수] 견적 상담을 위한 개인정보(상호, 담당자, 연락처, 이메일) 수집·이용에 동의합니다. 상담 완료 후 1년 보관 뒤 파기합니다.</label>
+          <div class="submit-row">
+            <button class="submit" type="submit" id="f-submit">견적 요청하기</button>
+            <p class="status" id="f-status" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="foot-menu"><div class="wrap"><a href="#top">회사소개</a><a href="#quote">이용약관</a><a href="#quote"><b>개인정보처리방침</b></a><a href="#quote">견적문의</a><a href="#notice">공지사항</a><a href="#cases">제작사례</a></div></div>
+  <div class="foot">
+    <div class="wrap">
+      <div>
+        <h4 data-site="company">ENVY</h4>
+        <p>상호 <span data-site="company">ENVY</span> · 대표 <span data-site="ceo">000</span> · 사업자등록번호 <span data-site="bizno">000-00-00000</span><br>
+        통신판매업신고 <span data-site="salesno">-</span> · 개인정보보호책임자 <span data-site="privacy">000</span><br>
+        주소 <span data-site="address">주소 입력</span><br>
+        © <span id="year">2026</span> <span data-site="company">ENVY</span>. All rights reserved.</p>
+      </div>
+      <div><h4>CS CENTER</h4><p class="big" data-site="phone">02-000-0000</p><p><span data-site="hours">평일 09:00 – 18:00</span> · <span data-site="closed">토·일·공휴일</span> 휴무</p></div>
+      <div><h4>견적 · 샘플</h4><p>이메일 <span data-site="email">your@email.com</span></p><p>디자인 파일은 AI·PDF로 보내주세요</p></div>
+    </div>
+  </div>
+</footer>
+
+<div class="quick">
+  <a class="q1" href="#quote">무료<br>견적</a>
+  <button class="q2" type="button" id="toTop" aria-label="맨 위로">TOP</button>
+</div>
+
+<div class="popwrap" id="popwrap" hidden></div>
+
+<script src="assets/icons.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>

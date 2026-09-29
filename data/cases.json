@@ -1,0 +1,28 @@
+{
+  "items": [
+    {
+      "show": true,
+      "title": "동네 베이커리 식빵 봉투 (예시)",
+      "spec": "OPP 40μm · 2도 인쇄 · 5,000매",
+      "image": "",
+      "icon": "bread",
+      "main": true
+    },
+    {
+      "show": true,
+      "title": "수제 그래놀라 스탠드파우치 (예시)",
+      "spec": "KRAFT/VMPET/LLDPE · 투명창 · 지퍼",
+      "image": "",
+      "icon": "kraft",
+      "main": true
+    },
+    {
+      "show": true,
+      "title": "반찬가게 진공 포장 (예시)",
+      "spec": "NY 15/LLDPE 70 · 1도 인쇄 · 10,000매",
+      "image": "",
+      "icon": "vacuum",
+      "main": true
+    }
+  ]
+}

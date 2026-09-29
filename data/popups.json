@@ -1,0 +1,14 @@
+{
+  "items": [
+    {
+      "show": true,
+      "title": "(예시) 첫 주문 동판비 50% 할인",
+      "body": "10월 한 달간 첫 주문 고객에게 동판비를 50% 지원해 드려요.\n견적 문의 시 '팝업 보고 문의'라고 남겨 주세요.",
+      "image": "https://images.pexels.com/photos/12024976/pexels-photo-12024976.jpeg?auto=compress&cs=tinysrgb&w=800",
+      "button": "견적 문의하기",
+      "link": "#quote",
+      "start": "2026-09-29T00:00",
+      "end": "2026-11-01T00:00"
+    }
+  ]
+}

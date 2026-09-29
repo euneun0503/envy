@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "show": true,
+      "tag": "베이커리 전용",
+      "title": "우리 빵집 로고 넣은\n빵봉투 만들기",
+      "subtitle": "식빵·바게트·쿠키 사이즈별 OPP 봉투 인쇄 제작",
+      "button": "견적 받아보기",
+      "color": "soft",
+      "image": "https://images.pexels.com/photos/9673514/pexels-photo-9673514.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      "start": "",
+      "end": ""
+    },
+    {
+      "show": true,
+      "tag": "시판 제품 패키지",
+      "title": "진열대에서 서 있는\n스탠드 지퍼 파우치",
+      "subtitle": "투명창 · 크라프트 · 알루미늄 · 하단 컬러까지 맞춤",
+      "button": "견적 받아보기",
+      "color": "green",
+      "image": "https://images.pexels.com/photos/12024976/pexels-photo-12024976.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      "start": "",
+      "end": ""
+    },
+    {
+      "show": true,
+      "tag": "처음 제작하는 분",
+      "title": "무지 샘플 먼저 받고\n사이즈부터 확인하세요",
+      "subtitle": "제품을 직접 넣어보고 결정하면 실패가 줄어요",
+      "button": "샘플 신청하기",
+      "color": "crust",
+      "image": "https://images.pexels.com/photos/7857523/pexels-photo-7857523.jpeg?auto=compress&cs=tinysrgb&w=1200",
+      "start": "",
+      "end": ""
+    }
+  ]
+}
