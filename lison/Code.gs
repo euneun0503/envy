@@ -74,6 +74,27 @@ function setup() {
   return key;
 }
 
+/* ================= 시트 메뉴: 코드를 몰라도 설정·비밀번호 확인 ================= */
+function onOpen() {
+  try {
+    SpreadsheetApp.getUi().createMenu('리손 앱')
+      .addItem('① 처음 설정 (마스터 비밀번호 만들기)', 'setupFromMenu')
+      .addItem('마스터 아이디·비밀번호 보기', 'showMasterFromMenu')
+      .addToUi();
+  } catch (e) {}
+}
+function setupFromMenu() {
+  const key = setup();
+  const m = masterGet_() || {};
+  SpreadsheetApp.getUi().alert('설정 완료',
+    '마스터 로그인\n\n아이디: ' + (m.id || 'admin') + '\n비밀번호: ' + (m.hash ? '(앱에서 바꾼 비밀번호)' : key) +
+    '\n\n다음: 위쪽 [배포] → [새 배포] → 유형 [웹 앱], 실행: 나, 액세스: 모든 사용자 → 배포 후 나온 웹 앱 주소를 앱 첫 화면에 넣으세요.', SpreadsheetApp.getUi().ButtonSet.OK);
+}
+function showMasterFromMenu() {
+  const m = masterGet_() || {}, key = PropertiesService.getScriptProperties().getProperty('API_KEY');
+  SpreadsheetApp.getUi().alert('마스터 로그인', key ? '아이디: ' + (m.id || 'admin') + '\n비밀번호: ' + (m.hash ? '앱에서 바꾼 비밀번호를 쓰세요 (잊었으면 로그인 화면의 [비밀번호 재설정])' : key) : '아직 처음 설정을 안 했어요. [리손 앱] → [① 처음 설정]을 먼저 누르세요.', SpreadsheetApp.getUi().ButtonSet.OK);
+}
+
 /* ================= 웹 앱 ================= */
 function doGet() { return json_({ ok: true, message: '리손패키지 거래처 관리 API 동작 중' }); }
 
