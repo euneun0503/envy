@@ -2080,8 +2080,15 @@ function apiErrMsg(e) {
 function postServer(action, payload) {
   var url = store.get('url'), tok = store.get('token'), key = store.get('key');
   var body = JSON.stringify(Object.assign({ action: action }, tok ? { token: tok } : { key: key }, payload));
-  return fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body, redirect: 'follow' })
-    .then(function (r) { if (!r.ok) throw new Error('서버 응답 오류 (' + r.status + ')'); return r.json(); })
+  var ctl = typeof AbortController === 'function' ? new AbortController() : null, tmr = ctl ? setTimeout(function () { ctl.abort(); }, 150000) : 0;
+  return fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body, redirect: 'follow', signal: ctl ? ctl.signal : undefined })
+    .catch(function (e) { clearTimeout(tmr); throw new Error(e && e.name === 'AbortError' ? '서버가 2분 넘게 답이 없어요. 잠시 뒤 새로고침을 눌러 주세요.' : '서버에 연결하지 못했어요. 인터넷 연결이나 웹 앱 주소를 확인하세요.'); })
+    .then(function (r) { clearTimeout(tmr); if (!r.ok) throw new Error('서버 응답 오류 (' + r.status + ')'); return r.text(); })
+    .then(function (t) {
+      try { return JSON.parse(t); } catch (e) {
+        throw new Error(/권한|authoriz|Authorization|승인/i.test(t) ? 'Apps Script가 새 권한 허용을 기다리고 있어요. 「리손 앱 서버」 시트에서 [리손 앱] 메뉴를 한 번 눌러 「허용」해 주세요.' : '서버가 데이터 대신 다른 화면을 보냈어요. 웹 앱을 「모든 사용자」로 배포했는지 확인하세요.');
+      }
+    })
     .then(function (j) {
       if (!j.ok) { if (/다시 로그인|로그인이 만료|사용이 중지/.test(j.error || '') && typeof showLogin === 'function') { store.set('token', ''); setTimeout(function () { showLogin(j.error); }, 0); } var er = new Error(j.error || '요청이 실패했습니다.'); er.conflict = j.conflict; throw er; }
       if (j.me && typeof setMe === 'function') setMe(j.me);
@@ -2089,7 +2096,7 @@ function postServer(action, payload) {
     });
 }
 function enqueue(action, payload, quietErr) {
-  pendingN++; prog(true); setSync(pendingN > 1 ? '저장 중… ' + pendingN + '건' : '저장 중…');
+  pendingN++; prog(true); setSync(pendingN > 1 ? '저장 중… ' + pendingN + '건' : (action === 'load' ? '불러오는 중…' : '저장 중…'));
   var p = sendQueue.then(function () { return postServer(action, payload); });
   sendQueue = p.then(function () {}, function () {});
   return p.then(function (j) {
