@@ -606,6 +606,9 @@ body.locked{overflow:hidden}
 .pay-t td{vertical-align:middle}.pay-t tr.sel td{background:color-mix(in srgb,var(--primary) 8%,var(--surface))}.pay-t input[type=checkbox]{width:18px;height:18px}
 @media (max-width:760px){.pay-t thead{display:none}.pay-t,.pay-t tbody{display:block;width:100%}.pay-t tr{display:grid;grid-template-columns:30px 1fr auto;grid-template-areas:'chk co amt' 'chk it it' 'chk sh inv' 'chk sup sup';gap:2px 8px;padding:10px 6px;border-bottom:1px solid var(--line)}.pay-t td{display:block;padding:0!important;border:0!important;text-align:left}
 .pay-t .c-chk{grid-area:chk;align-self:center}.pay-t .c-no{display:none}.pay-t .c-co{grid-area:co}.pay-t .c-it{grid-area:it;white-space:normal}.pay-t .c-sh{grid-area:sh}.pay-t .c-sup{grid-area:sup;text-align:left;font-size:12.5px}.pay-t .c-inv{grid-area:inv;justify-self:end}.pay-t .c-amt{grid-area:amt;text-align:right}.pay-t tr:not(:has(.c-co)) .c-it{grid-area:co}}
+.fav-row{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin:10px 0 4px}.fav-prev{display:grid;gap:6px;flex:0 0 260px}.fav-opts{flex:1 1 200px;display:grid;gap:8px}
+.fav-tab{display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:9px 9px 0 0;font-size:12.5px;max-width:260px;overflow:hidden;white-space:nowrap}.fav-tab img{width:16px;height:16px;flex:none}.fav-tab span{overflow:hidden;text-overflow:ellipsis}.fav-tab.light{background:#fff;color:#222;border:1px solid #ddd}.fav-tab.dark{background:#35363a;color:#eee}
+.fav-sizes{display:flex;align-items:flex-end;gap:14px;padding:6px 2px}
 .cp-box{margin:14px 0 4px;padding:12px;border:1px dashed var(--line);border-radius:12px}.cp-tabs{margin-bottom:10px;display:flex;flex-wrap:wrap}
 .cp-pane[data-cpp="wheel"]{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.cp-pane[hidden]{display:none!important}.cp-wheelwrap{position:relative;width:220px;max-width:100%}#cpWheel{display:block;width:100%;height:auto;border-radius:50%;cursor:crosshair;touch-action:none}
 .cp-mark{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.3);pointer-events:none}
@@ -7311,6 +7314,150 @@ $('#pUnpaid').addEventListener('change', function (e) {
   }
   var id = e.target.getAttribute('data-pid'); if (id) { var tr = e.target.closest('tr'); if (tr) tr.classList.toggle('sel', e.target.checked); }
 });
+
+/* =========================================================
+   탭 아이콘(파비콘) 바꾸기 — 설정 > 회사 로고 아래
+   기본 LP 마크 / 로고에서 자동 / 이미지 올리기 / 글자 아이콘
+   앱설정 'favicon'에 저장 → 모든 기기·직원에게 같이 적용
+   ========================================================= */
+var FAV_LP = (function () { var l = document.querySelector('link[rel="icon"]'); return l ? l.getAttribute('href') : ''; })();
+var FAV = { mode: 'lp' }, favDraft = null;
+try { var _fv = JSON.parse(localStorage.getItem('lison_fav') || 'null'); if (_fv && _fv.mode) FAV = _fv; } catch (e) {}
+function favApply(F) {
+  F = F || FAV;
+  var src64 = F.mode !== 'lp' && F.i64 ? F.i64 : FAV_LP, src180 = F.mode !== 'lp' && F.i180 ? F.i180 : '';
+  var l = document.querySelector('link[rel="icon"]');
+  if (!l && src64) { l = document.createElement('link'); l.rel = 'icon'; (document.head || document.documentElement).appendChild(l); }
+  if (l && src64) { l.setAttribute('href', src64); l.setAttribute('type', 'image/png'); }
+  var a = document.querySelector('link[rel="apple-touch-icon"]');
+  if (a && src180) a.setAttribute('href', src180); else if (a && F.mode === 'lp' && a.dataset.lp) a.setAttribute('href', a.dataset.lp);
+}
+(function () { var a = document.querySelector('link[rel="apple-touch-icon"]'); if (a) a.dataset.lp = a.getAttribute('href'); })();
+favApply();
+function favSaveObj(F) { return { mode: F.mode, i64: F.mode === 'lp' ? '' : (F.i64 || ''), i180: F.mode === 'lp' ? '' : (F.i180 || ''), letter: F.letter || '', color: F.color || '' }; }
+// 서버에서 받은 설정 적용 (로고 적용할 때 같이)
+var _takeServerLogoF = takeServerLogo;
+takeServerLogo = function () {
+  _takeServerLogoF();
+  var v = (S.appSettings || {}).favicon; if (!v || favDraft) return;
+  try { var o = JSON.parse(v); if (o && o.mode) { FAV = o; try { localStorage.setItem('lison_fav', JSON.stringify(favSaveObj(FAV))); } catch (e) {} favApply(); } } catch (e) {}
+};
+
+/* ---- 이미지 → 정사각 아이콘 ---- */
+function favLoad(src) { return new Promise(function (res, rej) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = function () { rej(new Error('이미지를 열 수 없어요.')); }; im.src = src; }); }
+/** 투명·흰 여백을 잘라낸 영역 (가로로 긴 로고면 왼쪽 정사각 부분 = 심볼) */
+function favTrim(im, leftMark) {
+  var W = Math.min(800, im.naturalWidth || 256), H = Math.round((im.naturalHeight || 256) * W / (im.naturalWidth || 256));
+  var c = document.createElement('canvas'); c.width = W; c.height = H; var x = c.getContext('2d'); x.drawImage(im, 0, 0, W, H);
+  var d = x.getImageData(0, 0, W, H).data, x0 = W, y0 = H, x1 = -1, y1 = -1, ink = function (i) { return d[i + 3] > 24 && !(d[i] > 240 && d[i + 1] > 240 && d[i + 2] > 240); };
+  for (var yy = 0; yy < H; yy++) for (var xx = 0; xx < W; xx++) if (ink((yy * W + xx) * 4)) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (yy < y0) y0 = yy; if (yy > y1) y1 = yy; }
+  if (x1 < 0) return { c: c, x: 0, y: 0, w: W, h: H };
+  var r = { c: c, x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+  if (leftMark && r.w > r.h * 1.6) {
+    // 왼쪽부터 세로로 빈 줄(글자 사이 틈)이 나오는 곳까지를 심볼로
+    var colInk = function (cx) { for (var cy = r.y; cy <= r.y + r.h; cy++) if (ink((cy * W + cx) * 4)) return true; return false; };
+    var end = r.x, gap = 0, minW = Math.round(r.h * 0.5);
+    for (var cx = r.x; cx < r.x + r.w; cx++) { if (colInk(cx)) { end = cx; gap = 0; } else if (cx - r.x > minW && ++gap > Math.max(2, r.h * 0.06)) break; }
+    r.w = Math.min(r.w, end - r.x + 1);
+    if (r.w > r.h * 1.4) r.w = r.h; // 틈이 없으면 왼쪽 정사각
+    // 심볼 부분만 다시 세로 여백 자르기
+    var ny0 = r.y + r.h, ny1 = r.y;
+    for (var y2 = r.y; y2 < r.y + r.h; y2++) for (var x2 = r.x; x2 < r.x + r.w; x2++) if (ink((y2 * W + x2) * 4)) { if (y2 < ny0) ny0 = y2; if (y2 > ny1) ny1 = y2; }
+    if (ny1 >= ny0) { r.y = ny0; r.h = ny1 - ny0 + 1; }
+  }
+  return r;
+}
+function favSquare(r, size, bg, padRatio) {
+  var c = document.createElement('canvas'); c.width = c.height = size; var x = c.getContext('2d');
+  if (bg) { x.fillStyle = bg; var rad = size * 0.2; x.beginPath(); x.moveTo(rad, 0); x.arcTo(size, 0, size, size, rad); x.arcTo(size, size, 0, size, rad); x.arcTo(0, size, 0, 0, rad); x.arcTo(0, 0, size, 0, rad); x.closePath(); x.fill(); }
+  var pad = size * (padRatio == null ? 0.06 : padRatio), box = size - pad * 2, s = Math.min(box / r.w, box / r.h);
+  x.imageSmoothingQuality = 'high';
+  x.drawImage(r.c, r.x, r.y, r.w, r.h, (size - r.w * s) / 2, (size - r.h * s) / 2, r.w * s, r.h * s);
+  return c.toDataURL('image/png');
+}
+function favFromImage(src, leftMark) {
+  return favLoad(src).then(function (im) { var r = favTrim(im, leftMark); return { i64: favSquare(r, 64, '', 0.04), i180: favSquare(r, 180, '#ffffff', 0.12) }; });
+}
+function favLetter(txt, color) {
+  txt = String(txt || 'L').trim().slice(0, 2) || 'L'; color = color || getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#1e6b52';
+  function mk(size) {
+    var c = document.createElement('canvas'); c.width = c.height = size; var x = c.getContext('2d'), rad = size * 0.22;
+    x.fillStyle = color; x.beginPath(); x.moveTo(rad, 0); x.arcTo(size, 0, size, size, rad); x.arcTo(size, size, 0, size, rad); x.arcTo(0, size, 0, 0, rad); x.arcTo(0, 0, size, 0, rad); x.closePath(); x.fill();
+    x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.font = '800 ' + Math.round(size * (txt.length > 1 ? 0.48 : 0.62)) + 'px ' + (getComputedStyle(document.body).fontFamily || 'sans-serif');
+    x.fillText(txt, size / 2, size / 2 + size * 0.04);
+    return c.toDataURL('image/png');
+  }
+  return { i64: mk(64), i180: mk(180), letter: txt, color: color };
+}
+
+/* ---- 설정 화면 ---- */
+(function () {
+  var anchor = $('#logoCustom') && $('#logoCustom').nextElementSibling; // 로고 권장 규격 안내 줄
+  if (!anchor) return;
+  anchor.insertAdjacentHTML('afterend',
+    '<h2 style="margin-top:20px">탭 아이콘 (파비콘)</h2>' +
+    '<p class="sub" style="margin:-6px 0 8px">브라우저 탭·즐겨찾기·휴대폰 홈 화면에 보이는 작은 아이콘이에요.</p>' +
+    '<div class="seg" id="favMode" style="display:flex;flex-wrap:wrap"><button type="button" data-fm="lp" style="flex:1">기본 LP 마크</button><button type="button" data-fm="logo" style="flex:1">로고에서 자동</button><button type="button" data-fm="custom" style="flex:1">이미지 올리기</button><button type="button" data-fm="letter" style="flex:1">글자 아이콘</button></div>' +
+    '<div class="fav-row"><div class="fav-prev" id="favPrev"></div>' +
+      '<div class="fav-opts">' +
+        '<div id="favCustom" hidden><span class="btn file-btn">아이콘 이미지 올리기<input type="file" id="favFile" accept="image/png,image/jpeg,image/svg+xml,image/webp" aria-label="아이콘 이미지"></span><label class="check" style="min-height:30px"><input type="checkbox" id="favLeft"> 가로로 긴 로고면 왼쪽 심볼만 쓰기</label></div>' +
+        '<div id="favLetterBox" hidden class="g" style="grid-template-columns:1fr 1fr"><label class="f"><span>글자 (1~2자)</span><input id="favTxt" maxlength="2" placeholder="리"></label><label class="f"><span>바탕색</span><input type="color" id="favColor" value="#1e6b52" style="min-height:40px;padding:2px"></label></div>' +
+        '<p class="sub" id="favNote" style="margin:4px 0 0"></p>' +
+      '</div></div>' +
+    '<p class="sub">권장: 정사각 PNG 투명 배경 512×512px 이상. 저장하면 직원 화면에도 같이 바뀌어요(브라우저가 예전 아이콘을 기억하면 새로고침).</p>');
+})();
+function favDrawUI() {
+  var F = favDraft; if (!F) return;
+  $$('#favMode [data-fm]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-fm') === F.mode); });
+  $('#favCustom').hidden = F.mode !== 'custom'; $('#favLetterBox').hidden = F.mode !== 'letter';
+  var src = F.mode === 'lp' || !F.i64 ? FAV_LP : F.i64;
+  $('#favPrev').innerHTML = '<div class="fav-tab light"><img src="' + src + '" alt=""><span>리손패키지 거래처 관리</span></div><div class="fav-tab dark"><img src="' + src + '" alt=""><span>리손패키지 거래처 관리</span></div>' +
+    '<div class="fav-sizes"><img src="' + src + '" style="width:16px;height:16px" alt=""><img src="' + src + '" style="width:32px;height:32px" alt=""><img src="' + (F.mode !== 'lp' && F.i180 ? F.i180 : src) + '" style="width:60px;height:60px;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.2)" alt="홈 화면"></div>';
+  $('#favNote').textContent = F.mode === 'lp' ? '로고 앞의 LP 마크를 써요.' : F.mode === 'logo' ? (LOGO.mode === 'custom' && LOGO.img ? '지금 회사 로고에서 왼쪽 심볼을 잘라 만들었어요.' : '「내 로고 넣기」로 로고를 올리면 거기서 만들어요. 지금은 기본 LP 마크예요.') : F.mode === 'custom' ? (F.i64 ? '올린 이미지로 만들었어요. 여백은 자동으로 잘라요.' : '이미지를 올려 주세요.') : '글자와 바탕색으로 만들어요.';
+}
+function favBuild() {
+  var F = favDraft;
+  if (F.mode === 'logo') {
+    var lg = (logoDraft || LOGO); if (!(lg.mode === 'custom' && lg.img)) { F.i64 = ''; F.i180 = ''; favDrawUI(); return; }
+    favFromImage(lg.img, true).then(function (r) { F.i64 = r.i64; F.i180 = r.i180; favApply(F); favDrawUI(); }).catch(function (e) { toast(e.message); });
+    return;
+  }
+  if (F.mode === 'letter') { var r2 = favLetter($('#favTxt').value || (co().name || '리').slice(0, 1), $('#favColor').value); F.i64 = r2.i64; F.i180 = r2.i180; F.letter = r2.letter; F.color = r2.color; }
+  favApply(F); favDrawUI();
+}
+var _openSettingsF = openSettings;
+openSettings = function () {
+  _openSettingsF();
+  favDraft = JSON.parse(JSON.stringify(FAV));
+  $('#favTxt').value = favDraft.letter || ''; $('#favColor').value = favDraft.color || (getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#1e6b52');
+  $('#favLeft').checked = true;
+  favDrawUI();
+};
+$('#btnSettings').removeEventListener('click', _openSettingsF);
+$('#btnSettings').addEventListener('click', function (e) { e.stopImmediatePropagation(); openSettings(); }, true);
+$('#favMode').addEventListener('click', function (e) { var b = e.target.closest('[data-fm]'); if (!b || !favDraft) return; favDraft.mode = b.getAttribute('data-fm'); if (favDraft.mode === 'custom' && favDraft.srcMode !== 'custom') { favDraft.i64 = ''; favDraft.i180 = ''; } favDraft.srcMode = favDraft.mode; favBuild(); });
+$('#favTxt').addEventListener('input', function () { if (favDraft && favDraft.mode === 'letter') favBuild(); });
+$('#favColor').addEventListener('input', function () { if (favDraft && favDraft.mode === 'letter') favBuild(); });
+$('#favFile').addEventListener('change', function () {
+  var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+  if (f.size > 5 * 1024 * 1024) return toast('5MB 이하 이미지로 올려 주세요.');
+  var rd = new FileReader();
+  rd.onload = function () { favFromImage(rd.result, $('#favLeft').checked).then(function (r) { favDraft.mode = 'custom'; favDraft.srcMode = 'custom'; favDraft.i64 = r.i64; favDraft.i180 = r.i180; favApply(favDraft); favDrawUI(); }).catch(function (e) { toast(e.message); }); };
+  rd.readAsDataURL(f);
+});
+// 저장 (설정의 저장 버튼) — 원래 저장 처리 뒤에 실행
+$('#setForm').addEventListener('submit', function () {
+  if (!favDraft) return;
+  if (favDraft.mode !== 'lp' && !favDraft.i64) favDraft.mode = 'lp';
+  var changed = JSON.stringify(favSaveObj(favDraft)) !== JSON.stringify(favSaveObj(FAV));
+  FAV = favSaveObj(favDraft); favDraft = null;
+  try { localStorage.setItem('lison_fav', JSON.stringify(FAV)); } catch (e) {}
+  favApply();
+  if (changed) api('saveAppSetting', { name: 'favicon', value: JSON.stringify(FAV) }).catch(function () {});
+});
+// 닫기·취소면 원래 아이콘으로
+$('#setM').addEventListener('click', function (e) { if (e.target.closest('[data-close="setM"]') || e.target === this) { favDraft = null; favApply(); } });
 
 /* =========================================================
    포인트 색 직접 고르기: 원형 색상판 · HTML 코드(#RRGGBB) · 이미지 스포이트 · 화면 스포이트
