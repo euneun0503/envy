@@ -84,6 +84,7 @@ function onOpen() {
       .addItem('① 처음 설정 (마스터 비밀번호 만들기)', 'setupFromMenu')
       .addItem('마스터 아이디·비밀번호 보기', 'showMasterFromMenu')
       .addItem('보호(잠금) 확인', 'checkProtectionFromMenu')
+      .addItem('총정리 탭 고르기 (앱이 읽을 탭)', 'pickMainFromMenu')
       .addToUi();
   } catch (e) {}
 }
@@ -128,6 +129,19 @@ function protectionReport_() {
 function checkProtectionFromMenu() {
   const ui = SpreadsheetApp.getUi(), b = protectionReport_();
   ui.alert('보호 확인', b.length ? '지금 계정(' + Session.getEffectiveUser().getEmail() + ')이 고칠 수 없는 곳:\n· ' + b.join('\n· ') : '막힌 곳이 없어요. [① 처음 설정]을 다시 눌러 보세요.', ui.ButtonSet.OK);
+}
+function pickMainFromMenu() {
+  const ui = SpreadsheetApp.getUi(), props = PropertiesService.getScriptProperties();
+  let cands = []; try { cands = mainCandidates_().map(function (sh) { return sh.getName(); }); } catch (e) { ui.alert('시트를 열 수 없어요', e.message, ui.ButtonSet.OK); return; }
+  let cur = ''; try { cur = mainSheet_().getName(); } catch (e) {}
+  const r = ui.prompt('총정리 탭 고르기', '앱이 발주·매출을 읽고 저장할 탭 이름을 그대로 적어 주세요.\n\n지금 쓰는 탭: ' + (cur || '없음') + '\n고를 수 있는 탭: ' + (cands.join(', ') || '없음') + '\n\n비워 두면 자동(올해 연도가 든 탭)으로 돌아가요.', ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  const name = String(r.getResponseText() || '').trim();
+  if (name && cands.indexOf(name) < 0) { ui.alert('그런 탭이 없어요', '고를 수 있는 탭: ' + cands.join(', '), ui.ButtonSet.OK); return; }
+  if (name) props.setProperty('MAIN_SHEET_NAME', name); else props.deleteProperty('MAIN_SHEET_NAME');
+  SS_CACHE_ = null;
+  try { ensureMainCols_(mainSheet_()); fillMissingIds_(); } catch (e) { ui.alert('탭은 바꿨지만 열을 맞추지 못했어요', e.message, ui.ButtonSet.OK); return; }
+  ui.alert('바꿨어요', '이제 앱은 「' + mainSheet_().getName() + '」 탭을 읽어요. 앱에서 새로고침을 누르세요.', ui.ButtonSet.OK);
 }
 function showMasterFromMenu() {
   const m = masterGet_() || {}, key = PropertiesService.getScriptProperties().getProperty('API_KEY');
@@ -480,16 +494,26 @@ function ss_() {
   return SS_CACHE_;
 }
 function sheetIdOf_(s) { const m = String(s || '').match(/\/d\/([a-zA-Z0-9_-]{20,})/) || String(s || '').match(/^([a-zA-Z0-9_-]{20,})$/); return m ? m[1] : ''; }
+/** 3행에 발주일·업체명·품목 열 제목이 있는 탭들 */
+function mainCandidates_() {
+  const out = [];
+  ss_().getSheets().forEach(function (sh) {
+    if (sh.getLastRow() < CONFIG.HEADER_ROW) return;
+    const h = sh.getRange(CONFIG.HEADER_ROW, 1, 1, Math.max(1, sh.getLastColumn())).getDisplayValues()[0];
+    if (h.indexOf('발주일') >= 0 && h.indexOf('업체명') >= 0 && h.indexOf('품목') >= 0) out.push(sh);
+  });
+  return out;
+}
 function mainSheet_() {
   const ss = ss_();
+  // 1) 마스터가 고른 탭  2) 리손총정리·총정리  3) 올해 연도가 이름에 든 탭(예: 2026년)  4) 3행 열 제목이 맞는 첫 탭
+  const pick = PropertiesService.getScriptProperties().getProperty('MAIN_SHEET_NAME');
+  if (pick) { const p = ss.getSheetByName(pick); if (p) return p; }
   for (let i = 0; i < CONFIG.MAIN_SHEETS.length; i++) { const s = ss.getSheetByName(CONFIG.MAIN_SHEETS[i]); if (s) return s; }
-  // 이름이 달라도 3행에 '발주일·업체명·품목'이 있는 탭을 찾음
-  const all = ss.getSheets();
-  for (let i = 0; i < all.length; i++) {
-    const sh = all[i]; if (sh.getLastRow() < CONFIG.HEADER_ROW) continue;
-    const h = sh.getRange(CONFIG.HEADER_ROW, 1, 1, Math.max(1, sh.getLastColumn())).getDisplayValues()[0];
-    if (h.indexOf('발주일') >= 0 && h.indexOf('업체명') >= 0 && h.indexOf('품목') >= 0) return sh;
-  }
+  const cands = mainCandidates_(), yr = Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy');
+  const thisYear = cands.filter(function (sh) { return sh.getName().indexOf(yr) >= 0; });
+  if (thisYear.length) return thisYear[0];
+  if (cands.length) return cands[0];
   throw new Error("총정리 탭을 찾지 못했습니다. 탭 이름을 '" + CONFIG.MAIN_SHEETS[0] + "'로 하거나 3행에 발주일·업체명·품목 열 제목을 두세요.");
 }
 function ensureAll_() {
