@@ -834,7 +834,7 @@ function sendDoc_(D, r) {
   const to = r.method === 'fax' ? faxAddress_(D, r.to) : String(r.to || '').trim();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to.split(',')[0].trim())) throw new Error('받는 주소를 확인하세요: ' + to);
   const blobs = files.map(blobOf_);
-  MailApp.sendEmail({ to: to, subject: r.subject || ((r.senderName || '리손패키지') + ' 문서'), body: r.body || '', attachments: blobs, name: r.senderName || '리손패키지' });
+  sendMail_({ to: to, subject: r.subject || ((r.senderName || '리손패키지') + ' 문서'), body: r.body || '', attachments: blobs, name: r.senderName || '리손패키지' });
   let url = '';
   try { url = keepFile_(r, files[0]).getUrl(); } catch (e) {}
   D.sends.push({ '일시': nowStr_(), '업체명': r.co, '발주일': r.order || '', '품목': r.item || '', '공장': r.factory || '', '방법': r.method === 'fax' ? '팩스' : '이메일', '받는곳': to, '문서': files.map(function (f) { return f.name; }).join(', '), 'Rev': r.rev || 0, '결과': '보냄', '파일': url });
@@ -846,20 +846,46 @@ function digestCfg_(D) { let c = {}; try { c = JSON.parse((D.appSettings || {}).
 function setDigest_(D, r) {
   D.appSettings = D.appSettings || {};
   D.appSettings.digest = JSON.stringify({ on: !!r.on, hour: +r.hour || 8, to: r.to || '', weekend: !!r.weekend, coName: r.coName || '', appUrl: r.appUrl || '' });
-  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'sendMorningDigest') ScriptApp.deleteTrigger(t); });
-  if (r.on) ScriptApp.newTrigger('sendMorningDigest').timeBased().everyDays(1).atHour(+r.hour || 8).inTimezone(CONFIG.TZ).create();
-  return {};
+  // 설정은 먼저 저장하고, 매일 보내는 예약(트리거)은 따로 — 예약이 실패해도 설정은 남게
+  let warn = '', count = 0;
+  try {
+    ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'sendMorningDigest') ScriptApp.deleteTrigger(t); });
+    if (r.on) ScriptApp.newTrigger('sendMorningDigest').timeBased().everyDays(1).atHour(+r.hour || 8).inTimezone(CONFIG.TZ).create();
+    count = ScriptApp.getProjectTriggers().filter(function (t) { return t.getHandlerFunction() === 'sendMorningDigest'; }).length;
+  } catch (e) { warn = '설정은 저장했지만 매일 보내기 예약을 만들지 못했어요(' + e.message + '). 시트의 [리손 앱] 메뉴를 한 번 눌러 권한을 다시 허용해 주세요.'; }
+  let mm = {}; try { mm = mailMode_(); } catch (e) {}
+  return { trigger: count, warn: warn, mail: mm };
+}
+/* ---- 보내는 사람: 기본 envy2927@gmail.com ----
+   Apps Script는 배포한 계정의 Gmail로 보내요. envy2927이 그 계정의 Gmail 「다른 주소에서 메일 보내기」에 등록돼 있으면
+   보낸 사람이 envy2927로 나가고, 아니면 배포 계정으로 나가되 답장은 envy2927로 가요. (스크립트 속성 MAIL_FROM으로 바꿀 수 있음) */
+const MAIL_FROM_DEFAULT = 'envy2927@gmail.com';
+function mailFrom_() { return String(PropertiesService.getScriptProperties().getProperty('MAIL_FROM') || MAIL_FROM_DEFAULT).trim(); }
+function mailMode_() {
+  const from = mailFrom_(); let me = ''; try { me = Session.getEffectiveUser().getEmail(); } catch (e) {}
+  if (!from || from.toLowerCase() === String(me).toLowerCase()) return { mode: 'self', from: me };
+  let aliases = []; try { aliases = (GmailApp.getAliases() || []).map(function (a) { return String(a).toLowerCase(); }); } catch (e) {}
+  return aliases.indexOf(from.toLowerCase()) >= 0 ? { mode: 'alias', from: from } : { mode: 'replyTo', from: me, replyTo: from };
+}
+function sendMail_(m) {
+  const mm = mailMode_();
+  if (mm.mode === 'alias') {
+    GmailApp.sendEmail(m.to, m.subject, m.body || '', { htmlBody: m.htmlBody, attachments: m.attachments, name: m.name || '리손패키지', from: mm.from, replyTo: m.replyTo || mm.from });
+    return mm;
+  }
+  MailApp.sendEmail(mm.replyTo ? Object.assign({}, m, { replyTo: m.replyTo || mm.replyTo }) : m);
+  return mm;
 }
 function digestTo_(to) { return String(to || '').trim() || Session.getEffectiveUser().getEmail(); }
 function mailDigest_(D, opts, to) {
   const dg = buildDigest(D, today(), opts);
-  MailApp.sendEmail({ to: to, subject: dg.subject, body: dg.text, htmlBody: dg.html, name: opts.coName || '리손패키지' });
+  dg.mail = sendMail_({ to: to, subject: dg.subject, body: dg.text, htmlBody: dg.html, name: opts.coName || '리손패키지' });
   return dg;
 }
 function sendDigest_(D, r) {
   const to = digestTo_(r.to);
-  mailDigest_(D, { coName: r.coName || '', appUrl: r.appUrl || '' }, to);
-  return { to: to };
+  const dg = mailDigest_(D, { coName: r.coName || '', appUrl: r.appUrl || '' }, to);
+  return { to: to, mail: dg.mail || {} };
 }
 /** 매일 정한 시각에 트리거가 부름 */
 function sendMorningDigest() {
@@ -1124,7 +1150,7 @@ const USER_ACTIONS_ = {
       out.token = makeToken_('admin', masterVer_());
     } else if (!m.hash) { const key = props_().getProperty('API_KEY'); m.salt = Utilities.getUuid(); m.hash = hashPw_(m.salt, key); }
     masterSet_(m);
-    try { MailApp.sendEmail({ to: recoveryEmail_(), subject: '[리손패키지] 마스터 계정 정보가 바뀌었어요', body: '마스터 아이디: ' + m.id + (r.newPw ? '\n비밀번호도 바뀌었어요.' : '') + '\n휴대폰: ' + (m.phone || '-') + '\n일시: ' + Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd HH:mm') + '\n\n본인이 바꾼 것이 아니면 바로 비밀번호 재설정을 하세요.', name: '리손패키지' }); } catch (e) {}
+    try { sendMail_({ to: recoveryEmail_(), subject: '[리손패키지] 마스터 계정 정보가 바뀌었어요', body: '마스터 아이디: ' + m.id + (r.newPw ? '\n비밀번호도 바뀌었어요.' : '') + '\n휴대폰: ' + (m.phone || '-') + '\n일시: ' + Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd HH:mm') + '\n\n본인이 바꾼 것이 아니면 바로 비밀번호 재설정을 하세요.', name: '리손패키지' }); } catch (e) {}
     return Object.assign(out, { me: masterMe_() });
   },
   listLog: function (r) {
@@ -1156,7 +1182,7 @@ const USER_ACTIONS_ = {
     let main; try { main = mainSheet_(); } catch (e) { SS_CACHE_ = null; throw new Error('그 시트에서 총정리 탭을 찾지 못했어요. 3행에 발주일·업체명·품목 열 제목이 있어야 해요.'); }
     if (id) props_().setProperty('DATA_SHEET_ID', id); else props_().deleteProperty('DATA_SHEET_ID');
     ensureAll_(); fillMissingIds_();
-    try { MailApp.sendEmail({ to: recoveryEmail_(), name: '리손패키지', subject: '[리손패키지] 데이터 시트 연결이 바뀌었어요', body: '연결된 시트: ' + ss.getName() + '\n' + ss.getUrl() + '\n총정리 탭: ' + main.getName() + '\n일시: ' + Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd HH:mm') }); } catch (e) {}
+    try { sendMail_({ to: recoveryEmail_(), name: '리손패키지', subject: '[리손패키지] 데이터 시트 연결이 바뀌었어요', body: '연결된 시트: ' + ss.getName() + '\n' + ss.getUrl() + '\n총정리 탭: ' + main.getName() + '\n일시: ' + Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd HH:mm') }); } catch (e) {}
     return { sheet: { id: ss.getId(), name: ss.getName(), url: ss.getUrl(), main: main.getName(), custom: !!id } };
   },
   logoutAll: function () { props_().setProperty('MASTER_VER', String(masterVer_() + 1)); return {}; },
@@ -1196,7 +1222,7 @@ function resetRequest_(r) {
   st.reqs.push(now); st.salt = Utilities.getUuid(); st.hash = hashPw_(st.salt, code); st.exp = now + 600e3; st.tries = 0;
   props_().setProperty('RESET', JSON.stringify(st));
   const to = recoveryEmail_(), m = masterGet_() || {};
-  MailApp.sendEmail({ to: to, name: '리손패키지', subject: '[리손패키지] 마스터 비밀번호 재설정 인증 코드 ' + code,
+  sendMail_({ to: to, name: '리손패키지', subject: '[리손패키지] 마스터 비밀번호 재설정 인증 코드 ' + code,
     body: '인증 코드: ' + code + '\n\n10분 안에 앱 로그인 화면의 [비밀번호 재설정]에 입력하세요.\n마스터 아이디: ' + (m.id || 'admin') + '\n요청 시각: ' + Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd HH:mm') + '\n\n본인이 요청하지 않았다면 이 메일을 무시하세요. 코드가 없으면 비밀번호는 바뀌지 않아요.' });
   return { sentTo: maskEmail_(to), minutes: 10 };
 }
@@ -1210,7 +1236,7 @@ function resetConfirm_(r) {
   props_().setProperty('MASTER_VER', String(masterVer_() + 1));
   props_().setProperty('RESET', JSON.stringify({ reqs: st.reqs || [] }));
   lockClear_('login:master');
-  try { MailApp.sendEmail({ to: recoveryEmail_(), name: '리손패키지', subject: '[리손패키지] 마스터 비밀번호가 재설정됐어요', body: '마스터 아이디: ' + m.id + '\n일시: ' + Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd HH:mm') + '\n다른 기기의 마스터 로그인은 모두 끊겼어요.' }); } catch (e) {}
+  try { sendMail_({ to: recoveryEmail_(), name: '리손패키지', subject: '[리손패키지] 마스터 비밀번호가 재설정됐어요', body: '마스터 아이디: ' + m.id + '\n일시: ' + Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd HH:mm') + '\n다른 기기의 마스터 로그인은 모두 끊겼어요.' }); } catch (e) {}
   return { id: m.id };
 }
 /** 비상용: Apps Script 편집기에서 직접 실행 — 마스터를 admin + API_KEY 로 되돌림 */

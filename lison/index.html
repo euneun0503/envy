@@ -8022,7 +8022,12 @@ $('#dgPreview').addEventListener('click', function () {
 $('#dgSave').addEventListener('click', function () {
   var r = digestReq();
   if (r.to && r.to.split(',').some(function (x) { return !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(x.trim()); })) return toast('받는 사람 이메일을 확인하세요. 여러 명은 쉼표로 나눠요.');
-  api('setDigest', r, { wait: true }).then(function () { closeM('dgM'); toast(r.on ? '매일 ' + r.hour + '시쯤 요약 메일을 보내요' + (r.weekend ? '' : ' (주말 제외)') + '.' : '아침 요약 메일을 껐어요.'); }).catch(function () {});
+  api('setDigest', r, { wait: true }).then(function (res) {
+    res = res || {}; closeM('dgM');
+    var m = res.mail || {}, who = m.mode === 'alias' ? ' 보내는 사람: ' + m.from : m.mode === 'replyTo' ? ' 보내는 사람: ' + m.from + ' (답장은 ' + m.replyTo + ')' : '';
+    if (res.warn) toast(res.warn);
+    else toast((r.on ? '저장했어요. 매일 ' + r.hour + '시쯤 요약 메일을 보내요' + (r.weekend ? '' : ' (주말 제외)') + '.' : '저장했어요. 아침 요약 메일을 껐어요.') + who);
+  }).catch(function () {});
 });
 /* 체험판: 서버가 없으니 내 메일(Gmail 웹·메일 앱)에서 나에게 보내게 해준다 */
 var dgMail = null;
