@@ -84,11 +84,25 @@ function onOpen() {
   } catch (e) {}
 }
 function setupFromMenu() {
-  const key = setup();
+  const ui = SpreadsheetApp.getUi(), props = PropertiesService.getScriptProperties();
+  const cur = props.getProperty('DATA_SHEET_ID');
+  const r = ui.prompt('① 데이터 시트 연결',
+    '앱이 읽고 저장할 구글 시트 주소를 붙여넣으세요.\n(예: 리손 테스트 1006 시트 주소 https://docs.google.com/spreadsheets/d/…)\n\n지금 이 시트를 그대로 쓰려면 비워 두고 확인을 누르세요.' + (cur ? '\n\n지금 연결: ' + cur : ''),
+    ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  const url = String(r.getResponseText() || '').trim();
+  if (url) {
+    const id = sheetIdOf_(url);
+    if (!id) { ui.alert('시트 주소가 아니에요', '구글 시트 주소(https://docs.google.com/spreadsheets/d/…)를 그대로 붙여넣어 주세요.', ui.ButtonSet.OK); return; }
+    let ss; try { ss = SpreadsheetApp.openById(id); } catch (e) { ui.alert('시트를 열 수 없어요', '지금 계정(' + Session.getEffectiveUser().getEmail() + ')이 그 시트의 편집자인지 확인하세요.', ui.ButtonSet.OK); return; }
+    props.setProperty('DATA_SHEET_ID', id); SS_CACHE_ = ss;
+  }
+  let key;
+  try { key = setup(); } catch (e) { ui.alert('설정하지 못했어요', e.message, ui.ButtonSet.OK); return; }
   const m = masterGet_() || {};
-  SpreadsheetApp.getUi().alert('설정 완료',
-    '마스터 로그인\n\n아이디: ' + (m.id || 'admin') + '\n비밀번호: ' + (m.hash ? '(앱에서 바꾼 비밀번호)' : key) +
-    '\n\n다음: 위쪽 [배포] → [새 배포] → 유형 [웹 앱], 실행: 나, 액세스: 모든 사용자 → 배포 후 나온 웹 앱 주소를 앱 첫 화면에 넣으세요.', SpreadsheetApp.getUi().ButtonSet.OK);
+  ui.alert('설정 완료',
+    '데이터 시트: ' + ss_().getName() + ' (총정리 탭: ' + mainSheet_().getName() + ')\n\n마스터 로그인\n아이디: ' + (m.id || 'admin') + '\n비밀번호: ' + (m.hash ? '(앱에서 바꾼 비밀번호)' : key) +
+    '\n\n다음: Apps Script 화면 오른쪽 위 [배포] → [새 배포] → 유형 [웹 앱], 실행: 나, 액세스: 모든 사용자 → 배포 후 나온 웹 앱 주소를 앱 첫 화면에 넣으세요.', ui.ButtonSet.OK);
 }
 function showMasterFromMenu() {
   const m = masterGet_() || {}, key = PropertiesService.getScriptProperties().getProperty('API_KEY');
