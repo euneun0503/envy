@@ -2,6 +2,11 @@
 /* 최종 상태 우선순위: 완료 처리된 세금계산서는 모두 회색 */
 .txchip.tx-buy.ok,.txchip.tx-sale.ok{color:#737981!important;background:#f7f8fa!important;border:1px solid #e5e7eb!important}
 .txchip.tx-buy.ok i,.txchip.tx-sale.ok i{color:#737981!important}
+
+/* 입금관리 계산서 - 간편장부 공통 상태 버튼 사용 */
+#pUnpaid .c-inv{min-width:112px;white-space:nowrap}
+#pUnpaid .c-inv .txchip{margin-top:0;max-width:100%}
+.prod-page-info{text-align:center;font-size:12px;color:var(--muted,#6b7280);margin:8px 0 0}.plist+.clpager{margin-top:18px;margin-bottom:4px}
 </style>
 
 
@@ -2210,7 +2215,19 @@ function ask(title, msg, fields) {
    탭
    ========================================================= */
 var curTab = 'home';
+// 간편장부 첫 방문 시에만 한국시간 현재월로 초기화합니다.
+// 이후 사용자가 선택한 다른 연도·월은 이동/새로고침 중 유지됩니다.
+var bookPeriodInitialized = false;
 function showTab(t) {
+  if (t === 'book' && !bookPeriodInitialized) {
+    var nowYM = today().split('-');
+    var by = document.getElementById('bYear');
+    var bm = document.getElementById('bMonth');
+    if (by) by.value = nowYM[0];
+    if (bm) bm.value = String(Number(nowYM[1]));
+    bookPeriodInitialized = true;
+    if (typeof bookPage !== 'undefined') bookPage = 1;
+  }
   if (t === 'more') return openM('moreM');
   curTab = t;
   $$('#tabs button, #bnav button').forEach(function (b) {
@@ -3557,6 +3574,7 @@ var BOARD_COLS = ['', '동판 전', '원단 입고 대기', '인쇄', '합지·�
 var REASONS = ['거래처 요청', '시안·교정 지연', '동판 지연', '원단 입고 지연', '인쇄소 일정', '후가공 외주 지연', '자재 수급', '재작업'];
 var PROD_CFG_DEFAULT = { posts: [['합지 1차', 1], ['합지 2차', 1], ['합지 3차', 1], ['슬리터', 1], ['가공', 2], ['지퍼', 1], ['타공', 1], ['톰슨', 2]], days: [2, 2, 2, 1], skipWeekend: true };
 var prodView = 'list', prodFilter = 'open', prodYM = today().slice(0, 7), histKind = 'change', histCo = '';
+var prodListPage = 1, PROD_LIST_SIZE = 10;
 var _pcRaw = null, _pc = null;
 function prodCfg() {
   var raw = (S.appSettings || {}).prodConfig || '';
@@ -3781,7 +3799,23 @@ function renderProd() {
   if (pq) list = list.filter(function (g) { return [g.co, g.items, g.pk, (g.buyers || []).join(' '), g.sc['인쇄 공장'], g.sc['원단 발주처'], (g.posts || []).map(function (p) { return p['외주처'] + ' ' + p['공정']; }).join(' '), g.sc['메모']].join(' ').toLowerCase().indexOf(pq) >= 0; });
   list = sortBy(list, function (g) { return (g.done ? '1' + String(99999999 - Number(g.shippedOn.replace(/-/g, ''))) : '0' + (g.target || '9999')); });
   var body = '';
-  if (prodView === 'list') body = list.length ? '<div class="plist">' + list.map(function (g) { return prodCard(g); }).join('') + '</div>' : '<div class="empty">' + (prodFilter === 'open' ? '진행 중인 주문이 없어요. 발주 입력에서 새 주문을 넣으면 여기서 공정을 관리할 수 있어요.' : '해당하는 주문이 없어요.') + '</div>';
+  if (prodView === 'list') {
+    var totalProdPages = Math.max(1, Math.ceil(list.length / PROD_LIST_SIZE));
+    prodListPage = Math.max(1, Math.min(prodListPage, totalProdPages));
+    var fromProd = (prodListPage - 1) * PROD_LIST_SIZE;
+    var prodRows = list.slice(fromProd, fromProd + PROD_LIST_SIZE);
+    body = list.length ? '<div class="plist">' + prodRows.map(function (g) { return prodCard(g); }).join('') + '</div>' : '<div class="empty">' + (prodFilter === 'open' ? '진행 중인 주문이 없어요. 발주 입력에서 새 주문을 넣으면 여기서 공정을 관리할 수 있어요.' : '해당하는 주문이 없어요.') + '</div>';
+    if (totalProdPages > 1) {
+      var pgStart = Math.floor((prodListPage - 1) / 10) * 10 + 1;
+      var pgEnd = Math.min(pgStart + 9, totalProdPages);
+      var nav = '<nav class="clpager" aria-label="생산일정 페이지"><button type="button" class="pg" data-prodpage="first"' + (prodListPage === 1 ? ' disabled' : '') + '>«</button>' +
+        '<button type="button" class="pg" data-prodpage="prev"' + (prodListPage === 1 ? ' disabled' : '') + '>‹</button>';
+      for (var pgN = pgStart; pgN <= pgEnd; pgN++) nav += '<button type="button" class="pg' + (pgN === prodListPage ? ' on' : '') + '" data-prodpage="' + pgN + '"' + (pgN === prodListPage ? ' aria-current="page"' : '') + '>' + pgN + '</button>';
+      nav += '<button type="button" class="pg" data-prodpage="next"' + (prodListPage === totalProdPages ? ' disabled' : '') + '>›</button>' +
+        '<button type="button" class="pg" data-prodpage="last"' + (prodListPage === totalProdPages ? ' disabled' : '') + '>»</button></nav>';
+      body += nav + '<p class="prod-page-info">전체 ' + list.length + '건 · ' + (fromProd + 1) + '–' + (fromProd + prodRows.length) + '건 표시 · ' + prodListPage + ' / ' + totalProdPages + '페이지</p>';
+    }
+  }
   else if (prodView === 'board') {
     var cols = prodFilter === 'open' ? [1, 2, 3, 4, 5] : [1, 2, 3, 4, 5, 6];
     body = '<div class="tw" style="margin:0;padding:0"><div class="board" style="grid-template-columns:repeat(' + cols.length + ',minmax(170px,1fr));min-width:' + (cols.length * 180) + 'px">' + cols.map(function (i) {
@@ -3821,9 +3855,44 @@ function prodCalendar(gs) {
     cells += '<div class="cd' + (ds === t ? ' today' : '') + (wd === 0 ? ' sun' : wd === 6 ? ' sat' : '') + '"><span class="dn">' + d + '</span>' + (ev[ds] || []).join('') + '</div>';
   }
   return '<div class="cal-h"><button type="button" class="btn sm" data-cal="-1" aria-label="이전 달">‹</button><b>' + y + '년 ' + m + '월</b><button type="button" class="btn sm" data-cal="1" aria-label="다음 달">›</button>' +
-    '<span class="legend"><span><i class="lg ord"></i>발주</span><span><i class="lg step"></i>공정 예정</span><span><i class="lg ship"></i>출고 예정</span><span><i class="lg est"></i>예상</span><span><i class="lg done"></i>출고</span><span><i class="lg due"></i>납기</span></span></div>' +
+    '<button type="button" class="btn sm" id="pCalPng" aria-label="달력 PNG 이미지 다운로드">이미지 다운로드 (PNG)</button><span class="legend"><span><i class="lg ord"></i>발주</span><span><i class="lg step"></i>공정 예정</span><span><i class="lg ship"></i>출고 예정</span><span><i class="lg est"></i>예상</span><span><i class="lg done"></i>출고</span><span><i class="lg due"></i>납기</span></span></div>' +
     '<div class="tw" style="margin:0;padding:0"><div class="cal"><div class="wd">일</div><div class="wd">월</div><div class="wd">화</div><div class="wd">수</div><div class="wd">목</div><div class="wd">금</div><div class="wd">토</div>' + cells + '</div></div>';
 }
+
+/* ---------- 생산 일정 달력 PNG 이미지 저장 ---------- */
+function downloadProdCalendarPNG() {
+  if (prodView !== 'cal') return toast('달력 보기에서 사용해 주세요.');
+  if (typeof html2canvas !== 'function') return toast('이미지 저장 도구를 불러오지 못했습니다. 인터넷 연결을 확인하세요.');
+  var btn = $('#pCalPng'), body = $('#pBody');
+  if (!body) return;
+  var old = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '이미지 만드는 중…'; }
+  // 가로 스크롤에 잘리지 않도록 화면 밖에 복제하여 달력 전체 폭을 캡처합니다.
+  var stage = document.createElement('div');
+  stage.style.cssText = 'position:fixed;left:-20000px;top:0;width:1250px;padding:24px;background:#fff;color:#242424;z-index:-1;';
+  stage.innerHTML = '<div style="font-size:22px;font-weight:700;margin-bottom:16px">리손패키지 생산 일정 · ' + esc(prodYM.replace('-', '년 ') + '월') + '</div>';
+  var copy = body.cloneNode(true);
+  copy.querySelectorAll('#pCalPng,[data-cal]').forEach(function (el) { el.remove(); });
+  copy.querySelectorAll('.tw').forEach(function (el) { el.style.overflow = 'visible'; el.style.maxWidth = 'none'; });
+  copy.querySelectorAll('.cal').forEach(function (el) { el.style.minWidth = '0'; el.style.width = '100%'; });
+  stage.appendChild(copy); document.body.appendChild(stage);
+  html2canvas(stage, { scale: 2, backgroundColor: '#ffffff', useCORS: true, width: stage.scrollWidth, height: stage.scrollHeight, windowWidth: 1300, logging: false })
+    .then(function (canvas) {
+      canvas.toBlob(function (blob) {
+        if (!blob) { toast('이미지 파일을 만들지 못했습니다.'); return; }
+        var a = document.createElement('a'), u = URL.createObjectURL(blob);
+        a.href = u; a.download = '리손패키지_생산일정_' + prodYM + '.png';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(u); }, 1000);
+        toast('달력 이미지를 저장했습니다.');
+      }, 'image/png');
+    })
+    .catch(function (e) { toast('달력 이미지 저장 실패: ' + (e.message || e)); })
+    .then(function () { stage.remove(); if (btn) { btn.disabled = false; btn.textContent = old; } });
+}
+$('#pBody').addEventListener('click', function (e) {
+  if (e.target.closest('#pCalPng')) downloadProdCalendarPNG();
+});
 
 /* ---------- 제작 기간 분석 ---------- */
 function renderLead() {
@@ -4254,9 +4323,22 @@ document.addEventListener('click', function (e) {
   if (host.classList.contains('mini') || host.classList.contains('ev')) openDetail(g, '');
 });
 $('#pView').addEventListener('click', function (e) { var b = e.target.closest('[data-v]'); if (!b) return; prodView = b.getAttribute('data-v'); $$('#pView button').forEach(function (x) { x.classList.toggle('on', x === b); }); renderProd(); });
-$('#pFilter').addEventListener('change', function () { prodFilter = this.value; renderProd(); });
-$('#prCo').addEventListener('change', renderProd);
-$('#prQ').addEventListener('input', function () { clearTimeout(renderProd._q); renderProd._q = setTimeout(renderProd, 150); });
+$('#pFilter').addEventListener('change', function () { prodFilter = this.value; prodListPage = 1; renderProd(); });
+$('#prCo').addEventListener('change', function () { prodListPage = 1; renderProd(); });
+$('#prQ').addEventListener('input', function () { prodListPage = 1; clearTimeout(renderProd._q); renderProd._q = setTimeout(renderProd, 150); });
+$('#pBody').addEventListener('click', function (e) {
+  var b = e.target.closest('[data-prodpage]');
+  if (!b || b.disabled) return;
+  var total = Math.max(1, Math.ceil(prodGroups(false).length / PROD_LIST_SIZE));
+  var dir = b.getAttribute('data-prodpage');
+  if (dir === 'first') prodListPage = 1;
+  else if (dir === 'last') prodListPage = total;
+  else if (dir === 'prev') prodListPage = Math.max(1, prodListPage - 1);
+  else if (dir === 'next') prodListPage++;
+  else prodListPage = Number(dir) || 1;
+  renderProd();
+  var panel = $('#pBody'); if (panel) panel.scrollIntoView({block:'start', behavior:'smooth'});
+});
 $('#pBody').addEventListener('click', function (e) { var b = e.target.closest('[data-cal]'); if (!b) return; prodYM = addMonth(prodYM, +b.getAttribute('data-cal')); renderProd(); });
 
 /* =========================================================
@@ -5660,7 +5742,7 @@ function renderBook() {
   var years = uniq([thisY].concat(S.orders.map(function (o) { return (o['발주일'] || '').slice(0, 4); }), S.expenses.map(function (e) { return (e['사용일'] || '').slice(0, 4); })).filter(function (x) { return /^\d{4}$/.test(x); })).sort().reverse();
   var ys = $('#bYear'), yv = ys.value || thisY;
   ys.innerHTML = years.map(function (x) { return opt(x, x + '년'); }).join(''); ys.value = years.indexOf(yv) >= 0 ? yv : thisY;
-  var bm = $('#bMonth'), mv = bm.value;
+  var bm = $('#bMonth'), mv = bm.value || String(Number(today().slice(5, 7)));
   bm.innerHTML = opt('', '1년 전체') + range(1, 12).map(function (m) { return opt(String(m), m + '월'); }).join(''); bm.value = mv;
   var y = ys.value, month = +bm.value || 0;
   // 현재 기간·구분에 있는 계정과목만 노출하되, 검색·계정 선택과는 독립적으로 구성
@@ -7424,7 +7506,7 @@ function renderPayList() {
       return '<tr class="' + (pSel[o.ID] ? 'sel' : '') + '"><td class="c c-chk"><input type="checkbox" data-pid="' + esc(o.ID) + '"' + (pSel[o.ID] ? ' checked' : '') + '></td><td class="c sub num c-no">' + (P.from + i + 1) + '</td>' +
         (name ? '' : '<td class="c-co"><b>' + esc(o['업체명']) + '</b></td>') + '<td class="item c-it">' + esc(o['품목']) + (o['스펙'] ? ' <span class="spec">' + esc(o['스펙']) + '</span>' : '') + (neg ? '<div class="red" style="font-size:12px">클레임 차감 · 같은 업체와 같이 체크하면 상계</div>' : '') + '</td>' +
         '<td class="sub nowrap c-sh">' + (recognized(o) ? dShort(effShip(o)) + ' 출고' : (effShip(o) ? dShort(effShip(o)) + ' 예정' : '출고 전')) + '</td><td class="r num c-sup"><span class="m-only sub">공급가 </span>' + won(supply(o)) + '</td>' +
-        '<td class="c-inv">' + (o['세금계산서'] ? '<span class="pill ok">발행</span>' : '<span class="pill neg">미발행</span>') + '</td><td class="r num c-amt"><b' + (neg ? ' class="red"' : '') + '>' + won(total(o)) + '</b></td></tr>';
+        '<td class="c-inv">' + taxChip(o, 'sale') + '</td><td class="r num c-amt"><b' + (neg ? ' class="red"' : '') + '>' + won(total(o)) + '</b></td></tr>';
     }).join('') + '</tbody></table></div>';
   box.innerHTML = h + P.pager;
   updatePayBtn();
