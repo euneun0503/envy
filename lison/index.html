@@ -643,6 +643,7 @@ body.locked{overflow:hidden}
 .cr-doc.cust .cr-t td.cr-big{height:auto;min-height:30px}
 .cr-seal{display:flex;flex-direction:column;align-items:center;gap:6px;margin:12px 0 14px;font-size:13.5px}.cr-sign2{font-size:15px;display:flex;align-items:center;gap:8px}.cr-stamp{display:inline-flex;width:46px;height:46px;border:1.5px solid #c4302b;color:#c4302b;border-radius:50%;align-items:center;justify-content:center;font-size:12px;opacity:.55}
 .cr-no{color:var(--primary)}.cr-btn{margin-left:4px}
+.pg-inline{display:inline-flex;align-items:center;gap:8px;margin-left:8px}.pg-inline .pg-per{min-height:30px;padding:2px 26px 2px 8px;font-size:12.5px;width:auto}
 .rk-nschip{font:inherit;font-size:12.5px;font-weight:700;color:#fff;background:#d93a2b;border:0;border-radius:999px;padding:3px 10px;cursor:pointer}
 .rk-no.ns{background:#d93a2b;color:#fff}.rk-bar.ns i{background:#d93a2b}.rk-t.ns tr.rk-rep.open td{background:color-mix(in srgb,#d93a2b 7%,var(--surface))}.rk-t.ns tr.rk-sub td{font-size:12.5px}
 #rankM [data-rkm="nosale"]{color:#d93a2b}#rankM [data-rkm="nosale"].on{background:#d93a2b;color:#fff}.ns-btn{color:#d93a2b!important;border-color:color-mix(in srgb,#d93a2b 45%,transparent)!important}
@@ -1027,6 +1028,7 @@ function themeFromHex(hex) {
       <div id="nsBox"></div>
       <div class="tw table-only"><table class="t" id="oTable"></table></div>
       <div class="cards" id="oCards"></div>
+      <div id="oPager"></div>
     </div>
   </section>
 
@@ -2331,13 +2333,17 @@ function renderList() {
   var _nsM = noSaleKeys(), _ns = [];
   if ($('#qState').value !== 'nosale') { _ns = list.filter(function (o) { return _nsM[groupKey(o)]; }); list = list.filter(function (o) { return !_nsM[groupKey(o)]; }); }
   renderNoSaleBox(_ns);
-  if (!list.length) { $('#oTable').innerHTML = '<tbody><tr><td class="empty">조건에 맞는 발주가 없습니다.</td></tr></tbody>'; $('#oCards').innerHTML = '<div class="empty">조건에 맞는 발주가 없습니다.</div>'; return; }
+  if (!list.length) { if ($('#oPager')) $('#oPager').innerHTML = ''; $('#oTable').innerHTML = '<tbody><tr><td class="empty">조건에 맞는 발주가 없습니다.</td></tr></tbody>'; $('#oCards').innerHTML = '<div class="empty">조건에 맞는 발주가 없습니다.</div>'; return; }
   // 같은 제품 묶음(업체·발주일·품목, 부속 줄 포함)끼리 붙여 보여주고 번갈아 연한 회색
   var _pos = {}, _ord = [];
   list.forEach(function (o, i) { var k = groupKey(o); if (!(k in _pos)) { _pos[k] = _ord.length; _ord.push([]); } _ord[_pos[k]].push(o); });
   list = [].concat.apply([], _ord);
   var _bk = '', _bd = 1, band = {};
   list.forEach(function (o) { var k = groupKey(o); if (k !== _bk) { _bd = 1 - _bd; _bk = k; } band[o.ID] = _bd; });
+  var _LP = (typeof pgSlice === 'function' && PG.list) ? pgSlice('list', list) : { rows: list, pager: '', from: 0 }, _allN = list.length;
+  list = _LP.rows;
+  if ($('#oPager')) $('#oPager').innerHTML = _LP.pager;
+  if ($('#qSum') && typeof pgPerSel === 'function') $('#qSum').insertAdjacentHTML('beforeend', ' <span class="pg-inline">' + pgPerSel('list') + (_allN > PG.list.per ? ' <span class="sub">' + (_LP.from + 1) + '–' + (_LP.from + list.length) + ' / ' + _allN + '줄</span>' : '') + '</span>');
   $('#oTable').innerHTML = '<thead><tr><th>발주일</th><th>업체명</th><th>품목 · Spec</th><th class="r">수량 × 단가</th><th class="r">금액</th><th>출고</th><th>매입처 · 매입금액</th><th>마진</th><th>계산서</th><th>입금</th><th></th></tr></thead><tbody>' +
     list.map(function (o) {
       return '<tr data-id="' + esc(o.ID) + '"' + (band[o.ID] ? ' class="oband"' : '') + '><td class="num">' + dShort(o['발주일']) + '</td><td><b>' + esc(o['업체명']) + '</b></td>' +
@@ -7213,8 +7219,8 @@ $('#chMonthlyT').addEventListener('click', function (e) {
    입금 관리 · 미입금 목록: 검색 + 10/30/50/100개 보기 + 숫자 페이지
    (입금 처리 목록과 은행 맞추기 미입금 목록이 같은 페이지 도구를 씀)
    ========================================================= */
-var PG = { pay: { per: 10, page: 1, q: '' }, bku: { per: 10, page: 1, q: '' } };
-try { ['pay', 'bku'].forEach(function (k) { var v = +localStorage.getItem('pgPer_' + k); if ([10, 30, 50, 100].indexOf(v) >= 0) PG[k].per = v; }); } catch (e) {}
+var PG = { pay: { per: 10, page: 1, q: '' }, bku: { per: 10, page: 1, q: '' }, list: { per: 50, page: 1, q: '' } };
+try { ['pay', 'bku', 'list'].forEach(function (k) { var v = +localStorage.getItem('pgPer_' + k); if ([10, 30, 50, 100].indexOf(v) >= 0) PG[k].per = v; }); } catch (e) {}
 function pgPerSel(key) { return '<select class="inp pg-per" data-pgper="' + key + '" aria-label="한 페이지에 보기">' + [10, 30, 50, 100].map(function (v) { return '<option value="' + v + '"' + (PG[key].per === v ? ' selected' : '') + '>' + v + '개 보기</option>'; }).join('') + '</select>'; }
 function pgSearch(key, ph) { return '<input class="inp pg-q" data-pgq="' + key + '" value="' + esc(PG[key].q) + '" placeholder="' + esc(ph || '업체명·품목·금액 검색') + '" type="search">'; }
 function pgMatch(o, q) {
@@ -7244,7 +7250,7 @@ document.addEventListener('click', function (e) {
   var b = e.target.closest('.pg-bar [data-pg]'); if (!b || b.disabled) return;
   var key = b.closest('.pg-bar').getAttribute('data-pgkey'); PG[key].page = +b.getAttribute('data-pg');
   pgRender(key);
-  var top = key === 'pay' ? $('#pUnpaid') : $('#bkUnpaid'); if (top && top.getBoundingClientRect().top < 0) top.scrollIntoView({ block: 'start' });
+  if (key !== 'list') { var top = key === 'pay' ? $('#pUnpaid') : $('#bkUnpaid'); if (top && top.getBoundingClientRect().top < 0) top.scrollIntoView({ block: 'start' }); }
 });
 document.addEventListener('change', function (e) {
   var k = e.target.getAttribute && e.target.getAttribute('data-pgper'); if (!k) return;
@@ -7259,7 +7265,9 @@ document.addEventListener('input', function (e) {
     var el = document.querySelector('[data-pgq="' + k + '"]'); if (el) { el.focus(); try { el.setSelectionRange(pos, pos); } catch (er) {} }
   }, 180);
 });
-function pgRender(key) { if (key === 'pay') renderPayList(); else renderBkUnpaid(); }
+function pgRender(key) { if (key === 'pay') renderPayList(); else if (key === 'list') { renderList(); var t = $('#tab-list'); if (t && t.getBoundingClientRect().top < 0) t.scrollIntoView({ block: 'start' }); } else renderBkUnpaid(); }
+// 총정리 조건이 바뀌면 1페이지로 (원래 처리보다 먼저)
+['change', 'input'].forEach(function (ev) { document.addEventListener(ev, function (e) { if (e.target && /^(qText|qMonth|qState|qCo|qRep)$/.test(e.target.id)) PG.list.page = 1; }, true); });
 
 /* ---- 입금 처리 목록 ---- */
 function renderPayList() {
