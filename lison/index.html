@@ -371,7 +371,9 @@ button.ti{cursor:pointer}
 .book .nt-red{color:var(--bad);font-weight:600}
 .book .nt-blue{color:#2f6cc0;font-weight:600}
 /* 간편장부 검색/페이징 및 세금계산서 상태: 디자인 정의는 스타일 영역에서 일괄 관리 */
-.book-pagination{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:16px 0 4px}
+.book-pagination{display:flex;justify-content:center;align-items:center;gap:5px;flex-wrap:wrap;margin:16px 0 4px;max-width:100%;overflow-x:auto;padding-bottom:5px}
+.book-search{flex:1 1 230px;min-width:190px}
+.book-page-caption{font-size:11px;color:var(--muted);white-space:nowrap;margin-left:7px}
 .book-pagination:empty{display:none}
 .book-pagination button{min-width:34px}
 .txchip.tx-sale.ok,.txchip.tx-buy.ok{color:#737981!important;background:#f7f8fa!important;border:1px solid #e5e7eb!important}
@@ -1297,6 +1299,9 @@ function themeFromHex(hex) {
         <label class="f" style="flex:0 1 140px"><span>월</span><select id="bMonth" class="inp"></select></label>
         <label class="f" style="flex:1 1 200px"><span>매출 날짜 기준</span><select id="bBasis" class="inp"><option value="ship">출고일 (없으면 발주일)</option><option value="order">발주일</option></select></label>
         <label class="f" style="flex:0 1 150px"><span>조회 구분</span><select id="bKind" class="inp"><option value="all">전체</option><option value="sale">매출</option><option value="buy">매입</option><option value="exp">카드·경비</option></select></label>
+        <label class="f" style="flex:0 1 175px"><span>계정과목</span><select id="bAccount" class="inp"><option value="">전체 계정과목</option></select></label>
+        <label class="f book-search"><span>장부 검색</span><input id="bQuery" class="inp" type="search" placeholder="거래처·품목·계정과목·비고 검색" autocomplete="off"></label>
+        <button class="btn sm" type="button" id="bReset" title="조회조건 초기화">검색 초기화</button>
         <button class="btn" type="button" data-export="book">간편장부 엑셀</button>
         <button class="btn p" type="button" id="bWrite">구글 시트에 장부 탭 만들기</button>
       </div>
@@ -5638,7 +5643,16 @@ var bookPage = 1, bookPageSize = 20;
 function selectedBookRows() {
   var rows = bookEntries($('#bYear').value, +$('#bMonth').value || 0, $('#bBasis').value);
   var kind = $('#bKind') ? $('#bKind').value : 'all';
-  return rows.filter(function(r) { return kind === 'all' || r.kind === kind; });
+  var account = $('#bAccount') ? $('#bAccount').value : '';
+  var query = ($('#bQuery') ? $('#bQuery').value : '').trim().toLocaleLowerCase('ko-KR');
+  return rows.filter(function(r) {
+    if (kind !== 'all' && r.kind !== kind) return false;
+    if (account && r.acct !== account) return false;
+    if (!query) return true;
+    var o = r.ref && (r.kind === 'sale' || r.kind === 'buy') ? orderById(r.ref) : null;
+    var memo = o ? [o['매출계산서메모'], o['매입계산서메모']].join(' ') : '';
+    return [r.d, r.acct, r.what, r.who, r.note, memo].join(' ').toLocaleLowerCase('ko-KR').indexOf(query) !== -1;
+  });
 }
 function renderBook() {
   if (!$('#bYear')) return;
@@ -5648,12 +5662,21 @@ function renderBook() {
   ys.innerHTML = years.map(function (x) { return opt(x, x + '년'); }).join(''); ys.value = years.indexOf(yv) >= 0 ? yv : thisY;
   var bm = $('#bMonth'), mv = bm.value;
   bm.innerHTML = opt('', '1년 전체') + range(1, 12).map(function (m) { return opt(String(m), m + '월'); }).join(''); bm.value = mv;
-  var y = ys.value, month = +bm.value || 0, rows = selectedBookRows();
+  var y = ys.value, month = +bm.value || 0;
+  // 현재 기간·구분에 있는 계정과목만 노출하되, 검색·계정 선택과는 독립적으로 구성
+  var accountSelect = $('#bAccount'), accountValue = accountSelect.value;
+  var knd = $('#bKind').value;
+  var accounts = uniq(bookEntries(y, month, $('#bBasis').value)
+    .filter(function(r) { return knd === 'all' || r.kind === knd; })
+    .map(function(r) { return r.acct; }).filter(Boolean)).sort();
+  accountSelect.innerHTML = '<option value="">전체 계정과목</option>' + accounts.map(function(a) { return opt(a, a); }).join('');
+  accountSelect.value = accounts.indexOf(accountValue) >= 0 ? accountValue : '';
+  var rows = selectedBookRows();
   var T = bookTotals(rows);
   $('#bSum').innerHTML = [['수입 (매출 공급가)', T.inA, '부가세 ' + won(T.inV)], ['비용 (매입·경비)', T.exA, '공제 부가세 ' + won(T.exV)], ['수입 − 비용', T.inA - T.exA, T.asA ? '사업용 자산 ' + won(T.asA) + ' 별도' : '사업용 자산 없음']]
     .map(function (k) { return '<div class="kpi"><div class="l">' + k[0] + '</div><div class="v num' + (k[1] < 0 ? ' red' : '') + '">' + won(k[1]) + '</div><div class="s">' + k[2] + '</div></div>'; }).join('');
   $('#bTitle').textContent = '간편장부 · ' + y + '년' + (month ? ' ' + month + '월' : '');
-  $('#bCount').textContent = rows.length + '건';
+  $('#bCount').textContent = '검색 결과 ' + rows.length + '건';
   if (!rows.length) { $('#bTable').innerHTML = '<tbody><tr><td class="empty">이 기간에 장부에 적을 거래가 없습니다.</td></tr></tbody>'; $('#bAcct').innerHTML = ''; $('#bPager').innerHTML = ''; return; }
   var head = '<thead><tr><th rowspan="2">일자</th><th rowspan="2">계정과목</th><th rowspan="2">거래내용</th><th rowspan="2">거래처</th><th colspan="2">수입 (매출)</th><th colspan="2">비용 (원가 포함)</th><th colspan="2">사업용 자산 증감</th><th rowspan="2">비고</th></tr><tr><th>금액</th><th>부가세</th><th>금액</th><th>부가세</th><th>금액</th><th>부가세</th></tr></thead>';
   var body = '', curM = '', mRows = [], cum = { inA: 0, inV: 0, exA: 0, exV: 0, asA: 0, asV: 0 };
@@ -5675,7 +5698,21 @@ function renderBook() {
   });
   flush();
   $('#bTable').innerHTML = head + '<tbody>' + body + '</tbody>';
-  $('#bPager').innerHTML = totalPages <= 1 ? '' : '<button type="button" class="btn sm" data-bpage="prev" ' + (bookPage===1 ? 'disabled' : '') + '>이전</button>' + Array.from({length:totalPages},function(_,i){var n=i+1;return '<button type="button" class="btn sm'+(n===bookPage?' p':'')+'" data-bpage="'+n+'">'+n+'</button>';}).join('') + '<button type="button" class="btn sm" data-bpage="next" ' + (bookPage===totalPages?'disabled':'') + '>다음</button>';
+  // 숫자는 항상 10개 이하: «/» 10페이지 단위, ‹/› 한 페이지 단위
+  var groupFirst = Math.floor((bookPage - 1) / 10) * 10 + 1;
+  var groupLast = Math.min(totalPages, groupFirst + 9);
+  var pagerHtml = '';
+  if (totalPages > 1) {
+    pagerHtml += '<button type="button" class="btn sm" data-bpage="group-prev" title="이전 10페이지"' + (groupFirst === 1 ? ' disabled' : '') + '>«</button>';
+    pagerHtml += '<button type="button" class="btn sm" data-bpage="prev" title="이전 페이지"' + (bookPage === 1 ? ' disabled' : '') + '>‹</button>';
+    for (var pn = groupFirst; pn <= groupLast; pn++) {
+      pagerHtml += '<button type="button" class="btn sm' + (pn === bookPage ? ' p' : '') + '" data-bpage="' + pn + '"' + (pn === bookPage ? ' aria-current="page"' : '') + '>' + pn + '</button>';
+    }
+    pagerHtml += '<button type="button" class="btn sm" data-bpage="next" title="다음 페이지"' + (bookPage === totalPages ? ' disabled' : '') + '>›</button>';
+    pagerHtml += '<button type="button" class="btn sm" data-bpage="group-next" title="다음 10페이지"' + (groupLast === totalPages ? ' disabled' : '') + '>»</button>';
+    pagerHtml += '<span class="book-page-caption">' + bookPage + ' / ' + totalPages + '페이지</span>';
+  }
+  $('#bPager').innerHTML = pagerHtml;
   var acc = {};
   rows.forEach(function (r) { var a = acc[r.acct] = acc[r.acct] || { n: 0, a: 0, v: 0 }; a.n++; a.a += n(r.inA) + n(r.exA) + n(r.asA); a.v += n(r.inV) + n(r.exV) + n(r.asV); });
   var ak = Object.keys(acc).sort(function (a, b) { return acc[b].a - acc[a].a; });
@@ -5704,8 +5741,30 @@ function bookAoa() {
   flush();
   return { aoa: aoa, bold: bold, y: y, month: month, count: rows.length };
 }
-['#bYear', '#bMonth', '#bBasis', '#bKind'].forEach(function (id) { $(id).addEventListener('change', function(){bookPage=1;renderBook();}); });
-$('#bPager').addEventListener('click',function(e){var b=e.target.closest('[data-bpage]');if(!b)return;var v=b.getAttribute('data-bpage');bookPage+=(v==='prev'?-1:v==='next'?1:0);if(v!=='prev'&&v!=='next')bookPage=+v||1;renderBook();});
+['#bYear', '#bMonth', '#bBasis', '#bKind', '#bAccount'].forEach(function (id) {
+  $(id).addEventListener('change', function() { bookPage = 1; renderBook(); });
+});
+$('#bQuery').addEventListener('input', function() { bookPage = 1; renderBook(); });
+$('#bReset').addEventListener('click', function() {
+  $('#bKind').value = 'all';
+  $('#bAccount').value = '';
+  $('#bQuery').value = '';
+  bookPage = 1;
+  renderBook();
+});
+$('#bPager').addEventListener('click', function(e) {
+  var b = e.target.closest('[data-bpage]');
+  if (!b || b.disabled) return;
+  var v = b.getAttribute('data-bpage');
+  var maxPage = Math.max(1, Math.ceil(selectedBookRows().length / bookPageSize));
+  if (v === 'prev') bookPage--;
+  else if (v === 'next') bookPage++;
+  else if (v === 'group-prev') bookPage = Math.floor((bookPage - 1) / 10) * 10 - 9;
+  else if (v === 'group-next') bookPage = Math.floor((bookPage - 1) / 10) * 10 + 11;
+  else bookPage = Number(v) || 1;
+  bookPage = Math.min(maxPage, Math.max(1, bookPage));
+  renderBook();
+});
 $('#bWrite').addEventListener('click', function () {
   var b = bookAoa(); if (!b.count) return toast('장부에 적을 거래가 없습니다.');
   if (b.month) return toast('구글 시트 장부 탭은 1년 전체로 만들어요. 월을 "1년 전체"로 바꿔주세요.');
