@@ -1501,10 +1501,6 @@ function themeFromHex(hex) {
   </section>
 
   <section id="tab-clients" hidden>
-    <div class="plate-subtabs" role="tablist" aria-label="거래처 관리 카테고리">
-      <button type="button" class="btn p" data-client-sub="info">거래처 정보</button>
-      <button type="button" class="btn" data-client-sub="plate">동판관리</button>
-    </div>
     <div id="client-info-wrap">
     <div class="panel cl-sale">
       <div class="ph">
@@ -2484,7 +2480,7 @@ document.addEventListener('click', function (e) {
   var k = m.getAttribute('data-more');
   if (k === 'settings') openSettings(); else if (k === 'theme') openTheme(); else showTab(k);
 });
-$$('#tabs button, #bnav button').forEach(function (b) { b.addEventListener('click', function () { var tab=b.getAttribute('data-tab'); if(tab)showTab(tab); }); });
+$$('#tabs button, #bnav button').forEach(function (b) { b.addEventListener('click', function () { var tab=b.getAttribute('data-tab'); if(tab){if(tab==='clients'&&typeof showClientSub==='function')showClientSub('info');showTab(tab);} }); });
 
 /* =========================================================
    그리기
