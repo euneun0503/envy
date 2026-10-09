@@ -645,6 +645,7 @@ body.locked{overflow:hidden}
 .cr-seal{display:flex;flex-direction:column;align-items:center;gap:6px;margin:12px 0 14px;font-size:13.5px}.cr-sign2{font-size:15px;display:flex;align-items:center;gap:8px}.cr-stamp{display:inline-flex;width:46px;height:46px;border:1.5px solid #c4302b;color:#c4302b;border-radius:50%;align-items:center;justify-content:center;font-size:12px;opacity:.55}
 .cr-no{color:var(--primary)}.cr-btn{margin-left:4px}
 .pg-inline{display:inline-flex;align-items:center;gap:8px;margin-left:8px}.pg-inline .pg-per{min-height:30px;padding:2px 26px 2px 8px;font-size:12.5px;width:auto}
+.db-basis button{min-height:28px;padding:3px 10px;font-size:12.5px}
 .rk-nschip{font:inherit;font-size:12.5px;font-weight:700;color:#fff;background:#d93a2b;border:0;border-radius:999px;padding:3px 10px;cursor:pointer}
 .rk-no.ns{background:#d93a2b;color:#fff}.rk-bar.ns i{background:#d93a2b}.rk-t.ns tr.rk-rep.open td{background:color-mix(in srgb,#d93a2b 7%,var(--surface))}.rk-t.ns tr.rk-sub td{font-size:12.5px}
 #rankM [data-rkm="nosale"]{color:#d93a2b}#rankM [data-rkm="nosale"].on{background:#d93a2b;color:#fff}.ns-btn{color:#d93a2b!important;border-color:color-mix(in srgb,#d93a2b 45%,transparent)!important}
@@ -928,7 +929,7 @@ function themeFromHex(hex) {
         <h2 id="mLabel" class="num" style="min-width:96px;text-align:center"></h2>
         <button class="btn sm" type="button" id="mNext" aria-label="다음 달">›</button>
       </div>
-      <div class="bar" style="align-items:center"><span class="sub">발주일 기준 · 공급가액</span><button class="btn sm p" type="button" id="rankBtn">매출·매입처 순위 TOP 10</button><button class="btn sm" type="button" id="repBtn">영업 담당자별 매출</button><button class="btn sm ns-btn" type="button" id="nsRankBtn">⚠ 매출 미입력 업체별</button></div>
+      <div class="bar" style="align-items:center"><div class="seg db-basis" id="dbBasis" role="radiogroup" aria-label="매출 날짜 기준"><button type="button" data-dbb="order">발주일 기준</button><button type="button" data-dbb="ship">출고일 기준</button></div><span class="sub">공급가액</span><button class="btn sm p" type="button" id="rankBtn">매출·매입처 순위 TOP 10</button><button class="btn sm" type="button" id="repBtn">영업 담당자별 매출</button><button class="btn sm ns-btn" type="button" id="nsRankBtn">⚠ 매출 미입력 업체별</button></div>
     </div>
     <div class="kpis" id="kpis"></div>
     <div class="dash">
@@ -2205,9 +2206,13 @@ function fillLists() {
   qc.value = cos.indexOf(cv) >= 0 ? cv : '';
 }
 
+var DBB = 'order'; try { DBB = localStorage.getItem('lison_dbb') || 'order'; } catch (e) {}
+/** 대시보드(카드·월별 그래프·표·업체별·순위)가 함께 쓰는 날짜: 발주일 또는 출고일(없으면 발주일) */
+function dashDate(o) { return DBB === 'ship' ? shipDate(o) : o['발주일']; }
 function renderHome() {
+  $$('#dbBasis [data-dbb]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-dbb') === DBB); });
   $('#mLabel').textContent = monthLabel(homeYM);
-  var mo = S.orders.filter(function (o) { return ymOf(o['발주일']) === homeYM; });
+  var mo = S.orders.filter(function (o) { return ymOf(dashDate(o)) === homeYM; });
   var sales = mo.reduce(function (s, o) { return s + supply(o); }, 0);
   var buys = mo.reduce(function (s, o) { return s + buyAmt(o); }, 0);
   var mg = sales - buys;
@@ -2266,6 +2271,7 @@ function summaryRows() {
     return { name: name, carry: r.carry, tot: r.carry + r.sales, paid: r.paid, bal: r.bal, unpaid: r.unpaid, noinv: r.noinv, pending: r.pending, pendingN: r.pendingN, last: r.last };
   }).sort(function (a, b) { return b.bal - a.bal || b.pending - a.pending; });
 }
+$('#dbBasis').addEventListener('click', function (e) { var b = e.target.closest('[data-dbb]'); if (!b) return; DBB = b.getAttribute('data-dbb'); try { localStorage.setItem('lison_dbb', DBB); } catch (er) {} renderHome(); toast(DBB === 'ship' ? '출고일 기준으로 봐요 (출고일 없으면 발주일). 세금계산서·미수와 같은 기준이에요.' : '발주일 기준으로 봐요. 시트 총정리 탭과 같은 기준이에요.'); });
 $('#mPrev').addEventListener('click', function () { homeYM = addMonth(homeYM, -1); renderHome(); });
 $('#mNext').addEventListener('click', function () { homeYM = addMonth(homeYM, 1); renderHome(); });
 document.addEventListener('click', function (e) {
@@ -5288,7 +5294,7 @@ function monthSeries(y) {
   var m = [];
   for (var i = 1; i <= 12; i++) m.push({ m: i, sales: 0, buy: 0 });
   S.orders.forEach(function (o) {
-    var d = saleDate(o); if (!d || d.slice(0, 4) !== y) return;
+    var d = dashDate(o); if (!d || String(d).slice(0, 4) !== y) return;
     var k = m[+d.slice(5, 7) - 1]; if (!k) return; k.sales += supply(o); k.buy += buyAmt(o);
   });
   return m;
@@ -5351,7 +5357,7 @@ function renderDash() {
   var y = homeYM.slice(0, 4), t = today();
   // 업체별 매출
   var co = {};
-  S.orders.forEach(function (o) { var d = saleDate(o); if (!d || d.slice(0, 4) !== y || !isSale(o)) return; co[o['업체명']] = (co[o['업체명']] || 0) + supply(o); });
+  S.orders.forEach(function (o) { var d = dashDate(o); if (!d || String(d).slice(0, 4) !== y || !isSale(o)) return; co[o['업체명']] = (co[o['업체명']] || 0) + supply(o); });
   var tot = Object.keys(co).reduce(function (s, k) { return s + co[k]; }, 0);
   var cl = Object.keys(co).sort(function (a, b) { return co[b] - co[a]; });
   var items = cl.slice(0, 6).map(function (k) { return { l: k, v: co[k], s: tot ? Math.round(co[k] / tot * 100) + '%' : '' }; });
@@ -6889,7 +6895,7 @@ function rkData() {
       e.sales += a; e.n++; total += a; cnt++; e.cos[o['업체명']] = 1; if (!o['지급확인']) e.unpaid += Math.round(a * 1.1);
       return;
     }
-    var d2 = saleDate(o); if (!isSale(o) || !inP(d2)) return;
+    var d2 = dashDate(o); if (!isSale(o) || !inP(d2)) return;
     if (rkMode === 'rep') {
       var rp = (repOf(o) || RK_NOREP), er = by[rp] || (by[rp] = { co: rp, sales: 0, n: 0, buy: 0, cos: {}, none: rp === RK_NOREP });
       var ce = er.cos[o['업체명']] || (er.cos[o['업체명']] = { co: o['업체명'], sales: 0, n: 0, buy: 0 });
@@ -6900,7 +6906,7 @@ function rkData() {
     e2.sales += supply(o); e2.n++; total += supply(o); cnt++;
   });
   if (!buyMode) S.orders.forEach(function (o) {
-    var d = saleDate(o) || o['발주일'];
+    var d = dashDate(o) || o['발주일'];
     if (rkMode === 'rep') { var rq = by[(repOf(o) || RK_NOREP)], cq = rq && rq.cos[o['업체명']]; if (!buyAmt(o) || !cq || !inP(d)) return; rq.buy += buyAmt(o); cq.buy += buyAmt(o); return; }
     if (!buyAmt(o) || !by[o['업체명']] || !inP(d)) return;
     by[o['업체명']].buy += buyAmt(o);
@@ -6944,7 +6950,7 @@ function pct(x) { return (Math.round(x * 1000) / 10).toFixed(1) + '%'; }
 function renderRank() {
   var buyMode = rkMode === 'buy', R = rkData(), top = R.list.slice(0, 10), rest = R.list.slice(10);
   var restSum = rest.reduce(function (s, e) { return s + e.sales; }, 0), topSum = R.total - restSum;
-  var ms = uniq(S.orders.map(function (o) { var d = (buyMode || rkMode === 'nosale') ? ((buyAmt(o) || rkMode === 'nosale') && (o['매입처'] || rkMode === 'nosale') ? o['발주일'] : '') : (isSale(o) ? saleDate(o) : ''); return d ? String(d).slice(0, 7) : ''; }).filter(function (m) { return /^\d{4}-\d{2}$/.test(m); })).sort().reverse();
+  var ms = uniq(S.orders.map(function (o) { var d = (buyMode || rkMode === 'nosale') ? ((buyAmt(o) || rkMode === 'nosale') && (o['매입처'] || rkMode === 'nosale') ? o['발주일'] : '') : (isSale(o) ? dashDate(o) : ''); return d ? String(d).slice(0, 7) : ''; }).filter(function (m) { return /^\d{4}-\d{2}$/.test(m); })).sort().reverse();
   $('#rkMonth').innerHTML = opt('', '월 선택') + ms.map(function (m) { return opt(m, m.replace('-', '년 ') + '월', m === rkPer.key); }).join('');
   $$('#rankM [data-rkq]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-rkq') === rkPer.key); });
   $$('#rankM [data-rkm]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-rkm') === rkMode); });
@@ -6955,7 +6961,7 @@ function renderRank() {
   if (repMode) {
     var noRep = R.list.filter(function (e) { return e.none; })[0];
     $('#rkNote').innerHTML = '발주 줄의 <b>내부 담당자</b>(비우면 거래처 기본 담당자) 기준 매출(공급가, 클레임 차감) · 담당자 줄을 누르면 맡은 거래처별 매출이 펼쳐져요(거래처 비중은 그 담당자 매출 중 몇 %인지). 담당자는 거래처 탭에서 정해요.' + (noRep ? ' <span class="pill warn">미지정 거래처 ' + noRep.coN + '곳 · ' + pct(noRep.share) + '</span>' : '');
-  } else $('#rkNote').textContent = buyMode ? '매입 공급가 · 날짜는 발주일 기준. 공장(매입처)을 누르면 공장 정산 상세로 가요.' : '공급가 기준(클레임 차감 반영) · 날짜는 출고일(없으면 발주일). 업체를 누르면 거래처원장으로 가요.';
+  } else $('#rkNote').textContent = buyMode ? '매입 공급가 · 날짜는 발주일 기준. 공장(매입처)을 누르면 공장 정산 상세로 가요.' : '공급가 기준(클레임 차감 반영) · 날짜는 ' + (DBB === 'ship' ? '출고일(없으면 발주일)' : '발주일') + ' 기준(대시보드 위 전환과 같음). 업체를 누르면 거래처원장으로 가요.';
   $('#rkSum').innerHTML = nsChip + '<span>기간 <b>' + esc(rkLabel()) + '</b></span><span>총' + W + ' <b class="num">' + won(R.total) + '원</b></span><span>' + who + ' <b>' + R.list.length + (repMode ? '명</b> · 거래처 ' + R.list.reduce(function (s, e) { return s + e.coN; }, 0) + '곳 · ' : '곳</b> · ') + R.cnt + '건</span><span>상위 10곳 <b class="num">' + pct(R.total ? topSum / R.total : 0) + '</b></span>';
   // 100% 막대: 한 줄에 전체를 나눠 보여줌 (상위 10곳 + 그 외)
   var segs = top.map(function (e) { return { n: e.none ? '' : e.rank, co: e.co, v: e.sales, sh: e.share, rest: e.none }; });
