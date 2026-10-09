@@ -1466,7 +1466,7 @@ function themeFromHex(hex) {
         <label class="f book-search"><span>장부 검색</span><input id="bQuery" class="inp" type="search" placeholder="거래처·품목·계정과목·비고 검색" autocomplete="off"></label>
         <button class="btn sm" type="button" id="bReset" title="조회조건 초기화">검색 초기화</button>
         <button class="btn" type="button" data-export="book">간편장부 엑셀</button>
-        <button class="btn p" type="button" id="bWrite">구글 시트에 장부 탭 만들기</button>
+        <button class="btn p" type="button" id="bWrite">데이터 연동으로 장부 생성</button>
       </div>
       <p class="note">총정리의 매출·매입과 카드·경비를 국세청 간편장부 양식(일자 · 계정과목 · 거래내용 · 거래처 · 수입 · 비용 · 사업용 자산 증감 · 비고)으로 자동 정리해요. 불공제 매입세액은 비용에 합쳐 적고 비고에 사유를 남겨요. 개인 사용은 빠져요.</p>
     </div>
@@ -1535,11 +1535,11 @@ function themeFromHex(hex) {
           <div class="bar"><button type="button" class="btn" id="plateLegacyBtn">원본 동판 목록 보기</button><button type="button" class="btn p" id="plateNewBtn">+ 개별 동판 등록</button></div></div>
         <div class="plate-kpis" id="plateKpis"></div>
         <div class="plate-controls"><input class="inp" id="plateSearch" type="search" placeholder="거래처 · 품명 · 공장 · 보관처 · 동판번호 검색" aria-label="동판 검색"><select class="inp" id="plateState"><option value="">모든 상태</option><option>사용중</option><option>단종·보관</option><option>재사용 검토</option><option>확인 필요</option><option>폐기</option></select></div>
-        <div class="tw"><table class="t plate-table"><thead><tr><th>동판번호 / 색판</th><th>거래처 / 품명</th><th>규격</th><th>제품 도수</th><th>보관처</th><th>상태</th><th>관리</th></tr></thead><tbody id="plateTbody"></tbody></table></div>
+        <div class="tw"><table class="t plate-table"><thead><tr><th>동판번호 / 색판</th><th>거래처명</th><th>품명</th><th>규격</th><th>제품 도수</th><th>보관처</th><th>상태</th><th>관리</th></tr></thead><tbody id="plateTbody"></tbody></table></div>
         <div class="plate-pager" id="platePager"></div>
       </div>
       <div class="panel" id="plateLegacyWrap">
-        <div class="ph"><div><h2>동판 재고 관리내역 · 구글 시트 연동</h2><p class="sub">구글 시트 원본입니다. 공용판·색판 수량은 검증 전까지 개별 실물로 집계하지 않습니다.</p></div><button type="button" class="btn" id="plateLegacyClose">닫기</button></div>
+        <div class="ph"><div><h2>동판 재고 관리내역 · 데이터 연동</h2><p class="sub">데이터 연동 원본입니다. 공용판·색판 수량은 검증 전까지 개별 실물로 집계하지 않습니다.</p></div><button type="button" class="btn" id="plateLegacyClose">닫기</button></div>
         <div class="plate-controls"><input class="inp" id="plateLegacySearch" placeholder="기존 품명·거래처 검색"><span class="sub" id="plateLegacyCount"></span></div>
         <div class="tw plate-legacy-scroll"><table class="t plate-legacy-table"><thead><tr><th>거래처명</th><th>품명</th><th>규격</th><th>도수(원본)</th><th>동판업체</th><th>보관처</th><th>상세</th><th>개별 관리</th></tr></thead><tbody id="plateLegacyTbody"></tbody></table></div>
         <div class="plate-pager" id="plateLegacyPager"></div>
@@ -1664,7 +1664,7 @@ function themeFromHex(hex) {
     <div class="lg-intro">
       <img class="lg-logo" id="lgLogo" alt="LITHON PACKAGE">
       <h1>리손패키지 거래처 관리</h1>
-      <p>발주 · 생산 일정 · 공장 정산 · 입금 · 세금까지 한 곳에서. 총정리 구글 시트와 바로 연결돼요.</p>
+      <p>발주 · 생산 일정 · 공장 정산 · 입금 · 세금까지 한 곳에서. 총정리 데이터와 바로 연동돼요.</p>
       <ul><li><b>발주</b> 입력하면 생산 일정·작업의뢰서가 자동으로</li><li><b>공장 정산</b> 단가 예정·확정, 지급까지</li><li><b>입금·원장</b> 은행 내역 붙여넣어 맞추기</li></ul>
     </div>
     <form class="lg-card" id="lgForm" autocomplete="on" novalidate>
@@ -1804,7 +1804,7 @@ function themeFromHex(hex) {
     <div class="more-list">
       <button class="btn" type="button" id="umUsers">계정 관리 (직원 아이디·권한)</button>
       <button class="btn" type="button" id="umLog">접속 기록 (누가·언제·무엇을)</button>
-      <button class="btn" type="button" id="umSheet">데이터 시트 연결 (구글 시트)</button>
+      <button class="btn" type="button" id="umSheet">데이터 연동 설정</button>
       <button class="btn" type="button" id="umPw">내 비밀번호 바꾸기</button>
       <button class="btn danger" type="button" id="umLogout">로그아웃</button>
     </div>
@@ -1963,7 +1963,7 @@ function themeFromHex(hex) {
       <button class="btn" type="button" data-more="clients">거래처</button>
       <button class="btn" type="button" data-more="theme">포인트 색</button>
       <button class="btn" type="button" data-more="settings">설정 · 회사 로고</button>
-      <a class="btn" id="moreSheet" target="_blank" rel="noopener" hidden>구글 시트 열기</a>
+      <a class="btn" id="moreSheet" target="_blank" rel="noopener" hidden>연동 데이터 열기</a>
     </div>
     <div class="actions" style="justify-content:flex-end"><button class="btn p" type="button" data-close="moreM">닫기</button></div>
   </div>
@@ -5021,7 +5021,7 @@ document.addEventListener('click', function (e) {
 
 
 /* ============ 거래처 관리 > 동판관리 ============ */
-var clientSub='info',platePage=1,plateLimit=10,plateLegacyPage=1,plateLegacyLimit=20;
+var clientSub='info',platePage=1,plateLimit=20,plateLegacyPage=1,plateLegacyLimit=20;
 function showClientSub(which){
   clientSub=which==='plate'?'plate':'info';
   document.getElementById('client-info-wrap').hidden=clientSub!=='info';
@@ -5038,11 +5038,11 @@ function renderPlates(){
   var total=Math.max(1,Math.ceil(rows.length/plateLimit));platePage=Math.min(Math.max(1,platePage),total);
   var set=['사용중','단종·보관','재사용 검토','확인 필요'];
   document.getElementById('plateKpis').innerHTML=[['개별 동판',all.length],['사용중',all.filter(p=>p['상태']==='사용중').length],['단종·보관',all.filter(p=>p['상태']==='단종·보관').length],['재사용 검토',all.filter(p=>p['상태']==='재사용 검토').length]].map(function(k){return '<div class="plate-kpi"><span>'+k[0]+'</span><b>'+k[1]+'</b></div>';}).join('');
-  document.getElementById('plateTbody').innerHTML=rows.slice((platePage-1)*plateLimit,platePage*plateLimit).map(function(p){return '<tr><td><b>'+plateEsc(p['동판번호'])+'</b><small>'+plateEsc(p['색판'])+'</small></td><td>'+plateEsc(p['거래처명'])+'<small>'+plateEsc(p['품명'])+(p['공용제품']?' · 공용: '+plateEsc(p['공용제품']):'')+(p['통합원본ID']?' · 원본: '+plateEsc(p['통합원본ID']):'')+'</small></td><td>'+plateEsc(p['규격'])+'</td><td>'+(p['도수']?plateEsc(p['도수'])+'도':'미확인')+plateSharedChip(p)+'</td><td>'+plateEsc(p['보관처'])+(p['보관지역']?' ('+plateEsc(p['보관지역'])+')':'')+'</td><td><span class="plate-tag" data-state="'+plateEsc(p['상태'])+'">'+plateEsc(p['상태'])+'</span></td><td><button class="btn sm" type="button" data-plate-edit="'+plateEsc(p.ID)+'">수정</button></td></tr>';}).join('')||'<tr><td colspan="7" class="empty">등록된 동판이 없습니다. 기존 시트 원본에서 확인 후 개별 등록하세요.</td></tr>';
+  document.getElementById('plateTbody').innerHTML=rows.slice((platePage-1)*plateLimit,platePage*plateLimit).map(function(p){return '<tr><td><b>'+plateEsc(p['동판번호'])+'</b><small>'+plateEsc(p['색판'])+'</small></td><td>'+plateEsc(p['거래처명'])+'</td><td>'+plateEsc(p['품명'])+(p['공용제품']?'<small>공용: '+plateEsc(p['공용제품'])+'</small>':'')+(p['통합원본ID']?'<small>원본: '+plateEsc(p['통합원본ID'])+'</small>':'')+'</td><td>'+plateEsc(p['규격'])+'</td><td><div class="plate-dose-line"><span class="plate-dose-main">'+(p['도수']?plateEsc(p['도수'])+'도':'미확인')+'</span><span class="plate-chip-group">'+plateSharedChip(p)+'</span></div></td><td>'+plateEsc(p['보관처'])+(p['보관지역']?' ('+plateEsc(p['보관지역'])+')':'')+'</td><td><span class="plate-tag" data-state="'+plateEsc(p['상태'])+'">'+plateEsc(p['상태'])+'</span></td><td><button class="btn sm" type="button" data-plate-edit="'+plateEsc(p.ID)+'">수정</button></td></tr>';}).join('')||'<tr><td colspan="8" class="empty">등록된 동판이 없습니다. 기존 시트 원본에서 확인 후 개별 등록하세요.</td></tr>';
   var pager=document.getElementById('platePager');var start=Math.floor((platePage-1)/10)*10+1,end=Math.min(total,start+9);var buttons=[['«',Math.max(1,start-10)],['‹',Math.max(1,platePage-1)]];for(var j=start;j<=end;j++)buttons.push([j,j]);buttons.push(['›',Math.min(total,platePage+1)],['»',Math.min(total,end+1)]);
   pager.innerHTML=buttons.map(function(o){return '<button type="button" class="btn sm'+(o[1]===platePage&&String(o[0])===String(platePage)?' p':'')+'" data-plate-page="'+o[1]+'">'+o[0]+'</button>';}).join('')+'<span class="sub" style="align-self:center;margin-left:8px">'+rows.length+'건 · '+platePage+'/'+total+'페이지</span>';
 }
-function legacySharedText(p){var s=String(p['비고']||'')+' '+String(p['원본도수']||'');var z=[];['백','먹','청','무광','황','녹','별'].forEach(function(c){var pat=new RegExp(c+'(?:색|판)?\s*[（(]?\s*(\d+)\s*(?:도|판)?[）)]?','g'),m;while((m=pat.exec(s))){var k=+m[1];if(k>0&&k<=24&&!z.some(function(x){return x.c===c&&x.n===k;}))z.push({c:c,n:k});}});return z.map(function(v){return '<span class="plate-share" data-color="'+v.c+'">('+v.c+v.n+')</span>';}).join('')||( /\d+\s*[（(]\d+[）)]/.test(s)?'<small>공용판 색상 미확인</small>':'');}
+function legacySharedText(p){var s=String(p['비고']||'')+' '+String(p['원본도수']||'');var z=[];['백','먹','청','무광','황','녹','별'].forEach(function(c){var pat=new RegExp(c+'(?:색|판)?\\s*[（(]?\\s*(\\d+)\\s*(?:도|판)?[）)]?','g'),m;while((m=pat.exec(s))){var k=+m[1];if(k>0&&k<=24&&!z.some(function(x){return x.c===c&&x.n===k;}))z.push({c:c,n:k});}});return z.map(function(v){return '<span class="plate-share" data-color="'+v.c+'">('+v.c+v.n+')</span>';}).join('')||( /\d+\s*[（(]\d+[）)]/.test(s)?'<small>공용판 색상 미확인</small>':'');}
 function legacyDoseMain(p){var raw=String(p['원본도수']||'').trim(),m=raw.match(/^\d+/);return m?m[0]:raw||'미입력';}
 function legacyPlateSeed(r){var m=String(r['원본도수']||'').match(/^\d+/);return {'거래처명':r['거래처명']||'','품명':r['품명']||'','규격':r['규격']||'','도수':m?m[0]:'','동판업체':r['동판업체']||'','보관처':r['보관처']||'','입고일':'','상태':'확인 필요','비고':'원본시트 참고: '+(r['비고']||''),'원본도수':r['원본도수']||'','__legacySource':true,'__legacySharedHtml':legacySharedText(r)};}
 function renderPlateLegacy(){
@@ -5492,7 +5492,7 @@ function ivScript(src,check){return new Promise(function(resolve,reject){if(chec
 async function ivReadPdf(f){await ivScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',function(){return !!window.pdfjsLib;});pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';var doc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;var lines=[];for(var p=1;p<=Math.min(doc.numPages,20);p++){var page=await doc.getPage(p),cont=await page.getTextContent(),rr={};cont.items.forEach(function(it){var y=Math.round(it.transform[5]/5)*5;(rr[y]=rr[y]||[]).push({x:it.transform[4],v:it.str});});Object.keys(rr).sort(function(a,b){return b-a;}).forEach(function(y){lines.push(rr[y].sort(function(a,b){return a.x-b.x;}).map(function(a){return a.v;}));});}return lines;}
 async function ivReadImage(f){await ivScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js',function(){return !!window.Tesseract;});var out=await Tesseract.recognize(f,'kor+eng');return ivParseText(out.data.text);}
 $('#ivFile').addEventListener('change',async function(){var f=this.files&&this.files[0];this.value='';if(!f)return;if(f.size>15*1024*1024)return toast('15MB 이하 파일만 사용할 수 있습니다.');ivStatus('파일 분석 중…',true);try{var rows=[];if(/\.(xlsx|xls|csv)$/i.test(f.name)){var buf=new Uint8Array(await f.arrayBuffer()),w;if(/\.csv$/i.test(f.name)){var t;try{t=new TextDecoder('utf-8',{fatal:true}).decode(buf);}catch(x){t=new TextDecoder('euc-kr').decode(buf);}w=XLSX.read(t.replace(/^\uFEFF/,''),{type:'string'});}else w=XLSX.read(buf,{type:'array'});w.SheetNames.forEach(function(sn){rows=rows.concat(XLSX.utils.sheet_to_json(w.Sheets[sn],{header:1,raw:false,defval:''}));});}else if(/\.pdf$/i.test(f.name)){rows=await ivReadPdf(f);}else if(/\.(png|jpe?g|webp)$/i.test(f.name)){rows=await ivReadImage(f);}else throw new Error('지원하지 않는 파일 형식입니다.');ivOpen(ivPickRows(rows),f.name);}catch(e){ivStatus('파일 분석 실패: '+e.message,false);toast('명세서를 분석하지 못했습니다: '+e.message);}});
-$('#ivSave').addEventListener('click',async function(){if(ivBusy)return;var company=$('#ivCompany').value.trim(),date=$('#ivDate').value,pay=$('#ivPay').value;if(!company)return toast('업체명을 입력하세요.');if(!date)return toast('거래일을 입력하세요.');var selected=ivRows.filter(function(r){return r.on;});if(!selected.length)return toast('저장할 품목을 선택하세요.');if(selected.some(function(r){return !r.name.trim()||!(r.amount>0);}))return toast('항목명과 금액을 확인하세요.');var dup={};S.expenses.forEach(function(e){dup[[e['사용일'],e['사용처'],e['비고'],n(e['금액'])].join('|')]=true;});var items=selected.map(function(r){return {사용일:date,결제수단:pay,카드:'',사용처:company,분류:r.cat,금액:Math.round(r.amount),부가세공제:r.vat&&catVat(r.cat),개인용도:r.cat===PERSONAL,비고:r.name.trim(),불공제사유:r.vat?'':'기타 (비고에 적기)'};});var existing=items.filter(function(x){return dup[[x['사용일'],x['사용처'],x['비고'],x['금액']].join('|')];});if(existing.length&&!window.confirm('같은 날짜·업체·항목·금액으로 등록된 '+existing.length+'건이 있습니다. 중복 등록하시겠습니까?'))return;ivBusy=true;var b=this;b.textContent='구글 시트에 저장 중…';ivTotals();try{await api('saveExpenses',{items:items},{wait:true});closeM('ivM');toast(items.length+'개 품목 저장 완료');ivStatus(items.length+'건 저장 완료',false);}catch(e){ivStatus('저장 실패 · 내용을 유지했습니다. 다시 확인하세요.',false);}finally{ivBusy=false;b.textContent='선택한 품목 일괄 저장';ivTotals();}});
+$('#ivSave').addEventListener('click',async function(){if(ivBusy)return;var company=$('#ivCompany').value.trim(),date=$('#ivDate').value,pay=$('#ivPay').value;if(!company)return toast('업체명을 입력하세요.');if(!date)return toast('거래일을 입력하세요.');var selected=ivRows.filter(function(r){return r.on;});if(!selected.length)return toast('저장할 품목을 선택하세요.');if(selected.some(function(r){return !r.name.trim()||!(r.amount>0);}))return toast('항목명과 금액을 확인하세요.');var dup={};S.expenses.forEach(function(e){dup[[e['사용일'],e['사용처'],e['비고'],n(e['금액'])].join('|')]=true;});var items=selected.map(function(r){return {사용일:date,결제수단:pay,카드:'',사용처:company,분류:r.cat,금액:Math.round(r.amount),부가세공제:r.vat&&catVat(r.cat),개인용도:r.cat===PERSONAL,비고:r.name.trim(),불공제사유:r.vat?'':'기타 (비고에 적기)'};});var existing=items.filter(function(x){return dup[[x['사용일'],x['사용처'],x['비고'],x['금액']].join('|')];});if(existing.length&&!window.confirm('같은 날짜·업체·항목·금액으로 등록된 '+existing.length+'건이 있습니다. 중복 등록하시겠습니까?'))return;ivBusy=true;var b=this;b.textContent='데이터 저장 중…';ivTotals();try{await api('saveExpenses',{items:items},{wait:true});closeM('ivM');toast(items.length+'개 품목 저장 완료');ivStatus(items.length+'건 저장 완료',false);}catch(e){ivStatus('저장 실패 · 내용을 유지했습니다. 다시 확인하세요.',false);}finally{ivBusy=false;b.textContent='선택한 품목 일괄 저장';ivTotals();}});
 
 /* =========================================================
    세금 계산 — 2026년 세법 기준 예상치
@@ -6081,7 +6081,7 @@ function renderGuide() {
       gi('간편장부 대상자인가요?', '도·소매업은 직전 연도 수입금액이 3억원 미만이면 간편장부, 3억원 이상이면 복식부기 의무자예요. 새로 시작한 사업자는 간편장부 대상이에요. ' + y + '년 매출(공급가)은 지금까지 ' + won(sales) + '원' + (prevSales ? ', ' + (+y - 1) + '년은 ' + won(prevSales) + '원' : '') + '이에요.', chip(prevSales >= 3e8 ? 'bad' : 'ok', prevSales >= 3e8 ? '복식부기 의무' : '간편장부 가능')) +
       gi('장부를 안 쓰면', '장부 없이 추계로 신고하면 산출세액의 20%가 무기장가산세로 붙어요. 신규 사업자나 직전 연도 수입 4,800만원 미만 소규모 사업자는 제외예요.', chip('auto', '간편장부 자동작성')) +
       gi('3만원 초과 지출은 적격증빙', '부가세 포함 3만원이 넘는 지출은 세금계산서·계산서·카드전표·현금영수증을 받아야 해요. 간이영수증만 있으면 증빙불비가산세 2%가 붙을 수 있어요.', chip(cashN.length ? 'no' : 'ok', cashN.length ? '확인 ' + cashN.length + '건' : '문제 없음')) +
-      gi('장부와 증빙 보관', '장부와 증빙은 종합소득세 신고 기한부터 5년간 보관해야 해요. 구글 시트와 카드사 명세서 파일을 함께 보관하세요.', '') +
+      gi('장부와 증빙 보관', '장부와 증빙은 종합소득세 신고 기한부터 5년간 보관해야 해요. 연동 데이터와 카드사 명세서 파일을 함께 보관하세요.', '') +
       '</div><div class="actions"><button class="btn p" type="button" data-goto="book">간편장부 자동작성 열기</button></div>';
   }
   box.innerHTML = h;
@@ -6265,8 +6265,8 @@ $('#bPager').addEventListener('click', function(e) {
 });
 $('#bWrite').addEventListener('click', function () {
   var b = bookAoa(); if (!b.count) return toast('장부에 적을 거래가 없습니다.');
-  if (b.month) return toast('구글 시트 장부 탭은 1년 전체로 만들어요. 월을 "1년 전체"로 바꿔주세요.');
-  ask('간편장부 탭 만들기', "구글 시트에 '간편장부 " + b.y + "' 탭을 만들어 " + b.count + '건을 적어요.\n같은 이름의 탭이 이미 있으면 새 내용으로 바뀌어요. 다른 탭은 그대로예요.', []).then(function (r) {
+  if (b.month) return toast('연동 장부는 1년 전체로 생성합니다. 월을 "1년 전체"로 바꿔주세요.');
+  ask('간편장부 탭 만들기', "데이터 연동에 '간편장부 " + b.y + "' 탭을 만들어 " + b.count + '건을 적어요.\n같은 이름의 탭이 이미 있으면 새 내용으로 바뀌어요. 다른 탭은 그대로예요.', []).then(function (r) {
     if (!r) return;
     api('writeBook', { year: b.y, rows: b.aoa, boldRows: b.bold }).then(function () { toast("'간편장부 " + b.y + "' 탭을 만들었습니다."); }).catch(function () {});
   });
@@ -8184,7 +8184,7 @@ function txOpenMenu(btn) {
     if ((status === '발행' || status === '수취') && !date) return toast('발행·수취일을 입력하세요.');
     save.disabled = true;
     save.textContent = '저장 중…';
-    menu.querySelector('#txSaveMsg').textContent = '구글 시트에 저장하고 결과를 확인하고 있습니다.';
+    menu.querySelector('#txSaveMsg').textContent = '데이터를 저장하고 결과를 확인하고 있습니다.';
     api('setTaxDoc', { id: id, side: side, status: status, date: date, memo: memo }, { wait: true })
     .then(function () {
       // 서버에 최신 값을 다시 읽어 변경이 유지되는지 확인
@@ -8195,7 +8195,7 @@ function txOpenMenu(btn) {
       if (actual !== status) throw new Error('서버 재조회 결과 상태가 유지되지 않았습니다. Apps Script 배포 버전을 확인하세요.');
       if (txMenuEl === menu) txCloseMenu();
       if (typeof renderLedger === 'function') renderLedger();
-      toast('구글 시트 저장 확인: ' + (side === 'sale' ? '매출 ' : '매입 ') + status);
+      toast('데이터 저장 확인: ' + (side === 'sale' ? '매출 ' : '매입 ') + status);
     }).catch(function (err) {
       if (txMenuEl === menu) {
         menu.querySelector('#txSaveMsg').textContent = '저장 실패: ' + (err.message || err);
@@ -9209,9 +9209,9 @@ $('#htOpen').addEventListener('click', openHometax);
    ========================================================= */
 function tabUrl(name) { var gid = (S.tabs || {})[name]; return S.sheetUrl && gid !== undefined ? S.sheetUrl.split('#')[0] + '#gid=' + gid : ''; }
 function tabNoteHtml(name, what) {
-  if (DEMO) return '<span>실제 앱에서는 구글 시트의 <b>' + name + '</b> 탭에 저장돼요. 시트에서 직접 여러 줄을 입력해도 앱으로 불러와요.</span>';
+  if (DEMO) return '<span>실제 앱에서는 연동 데이터의 <b>' + name + '</b> 탭에 저장돼요. 시트에서 직접 여러 줄을 입력해도 앱으로 불러와요.</span>';
   var u = tabUrl(name);
-  return '<span>' + what + ' 정보는 구글 시트 <b>' + name + '</b> 탭에 저장돼요. 시트에서 직접 여러 줄을 쓰거나 고쳐도 1분 안에 앱에 반영돼요.</span>' +
+  return '<span>' + what + ' 정보는 연동 데이터의 <b>' + name + '</b> 탭에 저장돼요. 시트에서 직접 여러 줄을 쓰거나 고쳐도 1분 안에 앱에 반영돼요.</span>' +
     (u ? '<a class="btn sm" href="' + esc(u) + '" target="_blank" rel="noopener">시트 탭 열기</a>' : '') + '<button type="button" class="btn sm" data-tabsync>지금 불러오기</button>';
 }
 function renderTabLinks() {
@@ -10858,7 +10858,7 @@ $('#lgForm').addEventListener('submit', function (e) {
     store.set('key', '');
     store.set('lastId', uid);
     setMe(j.me);
-    progress('구글 시트 데이터를 불러오는 중…');
+    progress('데이터 연동 중…');
     // 로그인 화면을 닫지 않은 채 데이터 조회 및 렌더링까지 완료한다.
     if (DEMO) {
       renderAll();
