@@ -149,7 +149,26 @@ function showMasterFromMenu() {
 }
 
 /* ================= 웹 앱 ================= */
-function doGet() { return json_({ ok: true, message: '리손패키지 거래처 관리 API 동작 중' }); }
+function doGet(e) {
+  const out = { ok: true, message: '리손패키지 거래처 관리 API 동작 중', ver: 'v4' };
+  if (e && e.parameter && e.parameter.check) {
+    // 연결 점검: 데이터 내용은 보내지 않고 시트·탭 이름과 줄 수만
+    try {
+      const ss = ss_(), sh = mainSheet_(), cols = mainCols_(sh), first = CONFIG.HEADER_ROW + 1, last = sh.getLastRow();
+      let n = 0, lastDate = '';
+      if (last >= first && cols['발주일']) {
+        const v = sh.getRange(first, cols['발주일'], last - first + 1, 1).getValues();
+        v.forEach(function (r) { const d = r[0]; if (d === '' || d == null) return; n++; const s = d instanceof Date ? Utilities.formatDate(d, CONFIG.TZ, 'yyyy-MM-dd') : String(d); if (s > lastDate) lastDate = s; });
+      }
+      out.sheet = ss.getName(); out.tab = sh.getName(); out.rows = n; out.lastOrder = lastDate.slice(0, 10);
+      out.candidates = mainCandidates_().map(function (x) { return x.getName(); });
+      out.picked = PropertiesService.getScriptProperties().getProperty('MAIN_SHEET_NAME') || '';
+      out.connected = !!PropertiesService.getScriptProperties().getProperty('DATA_SHEET_ID');
+      out.colsFound = Object.keys(cols).length;
+    } catch (err) { out.ok = false; out.error = String(err.message || err); }
+  }
+  return json_(out);
+}
 
 let reqForLog = null, whoForLog = null;
 function doPost(e) {
