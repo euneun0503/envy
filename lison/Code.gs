@@ -30,10 +30,10 @@ const MAIN_COLS = [
   ['비고', '비고', 1],
   // 없으면 오른쪽 끝에 자동으로 붙는 앱용 열
   ['출고수량', '출고수량', 1], ['출고금액', '출고금액', 1], ['납기일', '납기일', 1], ['생산단계', '생산단계', 1], ['생산메모', '생산메모', 1],
-  ['세금계산서', '세금계산서', 1], ['발행일', '발행일', 1], ['입금확인', '입금확인', 1], ['입금일', '입금일', 1], ['입금액', '입금액', 1], ['지급확인', '지급확인', 1], ['지급일', '지급일', 1], ['지급액', '지급액', 1], ['단가상태', '단가상태', 1], ['영업담당', '영업담당', 1], ['ID', 'ID', 1]
+  ['세금계산서', '세금계산서', 1], ['발행일', '발행일', 1], ['입금확인', '입금확인', 1], ['입금일', '입금일', 1], ['입금액', '입금액', 1], ['지급확인', '지급확인', 1], ['지급일', '지급일', 1], ['지급액', '지급액', 1], ['단가상태', '단가상태', 1], ['영업담당', '영업담당', 1], ['매출계산서상태', '매출계산서상태', 1], ['매출계산서메모', '매출계산서메모', 1], ['매입계산서', '매입계산서', 1], ['매입계산서일', '매입계산서일', 1], ['매입계산서메모', '매입계산서메모', 1], ['ID', 'ID', 1]
 ];
-const ADDED_COLS = ['출고수량', '출고금액', '납기일', '생산단계', '생산메모', '세금계산서', '발행일', '입금확인', '입금일', '입금액', '지급확인', '지급일', '지급액', '단가상태', '영업담당', 'ID'];
-const DATE_KEYS = ['발주일', '출고일', '발행일', '입금일', '납기일', '지급일'];
+const ADDED_COLS = ['출고수량', '출고금액', '납기일', '생산단계', '생산메모', '세금계산서', '발행일', '입금확인', '입금일', '입금액', '지급확인', '지급일', '지급액', '단가상태', '영업담당', '매출계산서상태', '매출계산서메모', '매입계산서', '매입계산서일', '매입계산서메모', 'ID'];
+const DATE_KEYS = ['발주일', '출고일', '발행일', '입금일', '납기일', '지급일', '매입계산서일'];
 const BOOL_KEYS = ['세금계산서', '입금확인', '지급확인'];
 const READONLY_KEYS = ['마진금액', '마진율'];
 
@@ -472,7 +472,24 @@ function engine_(D) {
       D.sends.push({ '일시': nowStr(), '업체명': r.co, '발주일': r.order, '품목': r.item || '', '공장': r.factory, '방법': r.method === 'fax' ? '팩스' : '이메일', '받는곳': to, '문서': r.file.name, 'Rev': r.rev, '결과': '체험판(실제 전송 안 함)', '파일': '' });
       return { to: to };
     },
-    setInvoice: function (r) { var o = find(D.orders, 'ID', r.id); o['세금계산서'] = !!r.issued; o['발행일'] = r.issued ? r.date : ''; },
+    setInvoice: function (r) { var o = find(D.orders, 'ID', r.id); o['세금계산서'] = !!r.issued; o['발행일'] = r.issued ? r.date : ''; if (r.issued) { o['매출계산서상태'] = ''; o['매출계산서메모'] = ''; } },
+    setTaxDoc: function (r) {
+      var ids = r.ids || [r.id], d = r.date || today(), cnt = 0;
+      ids.forEach(function (id) {
+        var o = find(D.orders, 'ID', id); if (!o) return; cnt++;
+        if (r.side === 'sale') {
+          if (r.status === '발행') { o['세금계산서'] = true; o['발행일'] = d; o['매출계산서상태'] = ''; o['매출계산서메모'] = ''; }
+          else if (r.status === '미발행') { o['세금계산서'] = false; o['발행일'] = ''; o['매출계산서상태'] = ''; o['매출계산서메모'] = ''; }
+          else if (r.status === '수정요청') { o['매출계산서상태'] = '수정요청'; o['매출계산서메모'] = r.memo || ''; }
+        } else {
+          if (r.status === '수취') { o['매입계산서'] = '수취'; o['매입계산서일'] = d; o['매입계산서메모'] = ''; }
+          else if (r.status === '미수령') { o['매입계산서'] = ''; o['매입계산서일'] = ''; o['매입계산서메모'] = ''; }
+          else if (r.status === '수정요청') { o['매입계산서'] = '수정요청'; o['매입계산서메모'] = r.memo || ''; }
+        }
+      });
+      if (!cnt) throw new Error('그 줄을 찾지 못했어요. 새로고침 후 다시 해 주세요.');
+      return { count: cnt };
+    },
     setInvoiceMany: function (r) { (r.items || []).forEach(function (it) { var o = find(D.orders, 'ID', it.id); if (!o) return; o['세금계산서'] = !r.off; o['발행일'] = r.off ? '' : (it.date || today()); }); return { count: (r.items || []).length }; },
     setDigest: function (r) { D.appSettings = D.appSettings || {}; D.appSettings.digest = JSON.stringify({ on: !!r.on, hour: r.hour, to: r.to, weekend: !!r.weekend }); return {}; },
     sendDigest: function (r) { return { to: r.to || '시트 주인', preview: true }; },
@@ -1051,7 +1068,7 @@ const ACTION_PERMS_ = {
   setPaid: ['pay', 'order'], setPaidMany: ['pay'], savePayment: ['pay'], deletePayment: ['pay'],
   saveClient: ['clients', 'pay'], deleteClient: ['clients'], importClients: ['clients'],
   saveExpense: ['exp'], saveExpenses: ['exp'], deleteExpenses: ['exp'], saveTaxSettings: ['tax'], writeBook: ['tax'],
-  saveClaim: ['claim'], deleteClaim: ['claim'], importMisu: [], bulkPayOut: [],
+  saveClaim: ['claim'], deleteClaim: ['claim'], setTaxDoc: ['tax', 'order', 'vpay', 'pay'], importMisu: [], bulkPayOut: [],
   saveAppSetting: ['prod'], setDigest: []
 };
 function props_() { return PropertiesService.getScriptProperties(); }
@@ -1274,7 +1291,7 @@ var LOG_LABELS = {
   saveClient: ['수정', '매출거래처 정보'], deleteClient: ['삭제', '매출거래처 삭제'], importClients: ['입력', '매출거래처 엑셀 올리기'], importFactories: ['입력', '매입거래처 엑셀 올리기'],
   saveExpense: ['입력', '카드·경비'], saveExpenses: ['입력', '카드·경비(여러 건)'], deleteExpenses: ['삭제', '카드·경비 삭제'], saveTaxSettings: ['설정', '세금 설정'], writeBook: ['입력', '간편장부 시트 만들기'],
   saveAppSetting: ['설정', '앱 설정'], saveUser: ['계정', '직원 계정 저장'], deleteUser: ['계정', '직원 계정 삭제'], saveMaster: ['계정', '마스터 정보 변경'], changeMyPassword: ['계정', '내 비밀번호 변경'],
-  saveClaim: ['입력', '불량·클레임 저장'], deleteClaim: ['삭제', '불량·클레임 삭제'],
+  saveClaim: ['입력', '불량·클레임 저장'], setTaxDoc: ['수정', '세금계산서 상태'], deleteClaim: ['삭제', '불량·클레임 삭제'],
   resetConfirm: ['계정', '마스터 비밀번호 재설정'], resetRequest: ['계정', '비밀번호 재설정 코드 요청'], logoutAll: ['계정', '모든 기기 로그아웃']
 };
 function logSummary(action, r, look) {
@@ -1312,7 +1329,7 @@ function logSummary(action, r, look) {
   if (r.ids) parts.push(r.ids.length + '건' + (r.date ? ' · ' + r.date : '') + (r.paid === false ? ' · 취소' : ''));
   if (r.id && !o && !r.user && action !== 'deleteUser') { var px = [r.paid === false ? '취소' : r.paid ? '처리' : '', r.date || ''].filter(Boolean).join(' · '); if (px) parts.push(px); }
   if (r.lines) parts.push(r.lines.length + '줄 (' + r.lines.map(function (l) { return l.step; }).join(', ') + ')');
-  if (r.status) parts.push('상태 ' + r.status);
+  if (r.status) parts.push((r.side === 'buy' ? '매입 계산서 ' : r.side === 'sale' ? '매출 계산서 ' : '상태 ') + r.status + (r.memo ? ' (' + r.memo + ')' : ''));
   if (r.reason) parts.push('사유: ' + r.reason);
   if (r.name && action === 'saveAppSetting') parts.push(r.name);
   if (r.method) parts.push(r.method + (r.to ? ' → ' + r.to : '') + (r.factory ? ' · ' + r.factory : ''));

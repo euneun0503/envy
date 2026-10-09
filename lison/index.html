@@ -649,6 +649,12 @@ body.locked{overflow:hidden}
 .cr-no{color:var(--primary)}.cr-btn{margin-left:4px}
 .pg-inline{display:inline-flex;align-items:center;gap:8px;margin-left:8px}.pg-inline .pg-per{min-height:30px;padding:2px 26px 2px 8px;font-size:12.5px;width:auto}
 .db-basis button{min-height:28px;padding:3px 10px;font-size:12.5px}
+.txchip{font:inherit;font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 8px;border:1px solid transparent;cursor:pointer;white-space:nowrap;display:inline-flex;gap:4px;align-items:center;margin-top:2px}
+.txchip i{font-style:normal;font-weight:500;opacity:.7;font-size:10.5px}.txchip.ok{background:rgba(47,108,192,.12);color:#24569c}.txchip.no{background:rgba(214,48,43,.1);color:#c4302b;border-color:rgba(214,48,43,.35);border-style:dashed}.txchip.fix{background:#fff1d6;color:#9a6300;border-color:#e3aa4c}
+.txmenu{position:fixed;z-index:300;width:230px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:6px;display:grid;gap:2px}.txmenu button{font:inherit;text-align:left;border:0;background:none;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--ink)}.txmenu button:hover{background:var(--raise)}.txmenu button.on{background:var(--primary-soft);color:var(--primary);font-weight:700}
+.txm-h{font-size:12.5px;font-weight:700;padding:6px 10px 4px;display:flex;flex-direction:column}.txm-h span{font-weight:400;color:var(--muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.txm-d{padding:4px 10px 6px;font-size:12px;color:var(--muted)}.txm-d input{font:inherit;font-size:12px;margin-left:4px;border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:var(--surface);color:var(--ink)}
+.book tr.bk-go{cursor:pointer}.book tr.bk-go:hover td{background:color-mix(in srgb,var(--primary) 7%,transparent)}
+tr.flash td,.card.flash,.ns-row.flash{animation:flashrow 2s ease}@keyframes flashrow{0%,40%{background:color-mix(in srgb,#e3aa4c 45%,transparent)}100%{background:transparent}}
 .rk-nschip{font:inherit;font-size:12.5px;font-weight:700;color:#fff;background:#d93a2b;border:0;border-radius:999px;padding:3px 10px;cursor:pointer}
 .rk-no.ns{background:#d93a2b;color:#fff}.rk-bar.ns i{background:#d93a2b}.rk-t.ns tr.rk-rep.open td{background:color-mix(in srgb,#d93a2b 7%,var(--surface))}.rk-t.ns tr.rk-sub td{font-size:12.5px}
 #rankM [data-rkm="nosale"]{color:#d93a2b}#rankM [data-rkm="nosale"].on{background:#d93a2b;color:#fff}.ns-btn{color:#d93a2b!important;border-color:color-mix(in srgb,#d93a2b 45%,transparent)!important}
@@ -2068,7 +2074,7 @@ function dataOfS() {
 /* 화면 먼저 바꾸고 저장은 뒤에서: 체크·출고·일정 같은 동작은 체험판과 같은 규칙으로 화면에 바로 반영하고,
    서버 저장은 순서대로 줄 세워 보냄. 실패하면 시트 기준으로 되돌리고 알려줌 */
 var OPTIMISTIC = { setPaid: 1, setPaidMany: 1, setInvoice: 1, setShip: 1, saveSched: 1, deleteOrder: 1, deletePayment: 1, deleteExpenses: 1,
-  saveAppSetting: 1, saveFactory: 1, setPayOut: 1, setBuyStatus: 1, setBuyLine: 1, deleteFactory: 1, saveTaxSettings: 1, saveClient: 1, deleteClient: 1, deleteBuyLines: 1, saveClaim: 1, deleteClaim: 1, importClients: 1, importFactories: 1, restoreOrder: 1, setInvoiceMany: 1 };
+  saveAppSetting: 1, saveFactory: 1, setPayOut: 1, setBuyStatus: 1, setBuyLine: 1, deleteFactory: 1, saveTaxSettings: 1, saveClient: 1, deleteClient: 1, deleteBuyLines: 1, setTaxDoc: 1, saveClaim: 1, deleteClaim: 1, importClients: 1, importFactories: 1, restoreOrder: 1, setInvoiceMany: 1 };
 var sendQueue = Promise.resolve(), pendingN = 0, lastServerData = null, sendFailed = false;
 function apiErrMsg(e) {
   var m = e.message || '';
@@ -5568,13 +5574,13 @@ function bookEntries(y, month, basis) {
   S.orders.forEach(function (o) {
     var d = basis === 'order' ? o['발주일'] : shipDate(o);
     if (!inP(d)) return;
-    if (isSale(o)) rows.push({ d: d, k: 0, acct: '상품매출', what: o['품목'] + (o['스펙'] ? ' ' + o['스펙'] : ''), who: o['업체명'], inA: supply(o), inV: vat(o), note: o['세금계산서'] ? '세금계산서 발행' + (o['발행일'] ? ' ' + dShort(o['발행일']) : '') : '세금계산서 미발행' });
-    if (buyAmt(o)) rows.push({ d: d, k: 1, acct: '상품매입', what: (/^\[(클레임|재납품)/.test(o['품목'] || '') ? o['품목'] + ' · ' : '') + (o['규격'] || o['품목']) + ' (' + o['업체명'] + ' 납품분)', who: o['매입처'] || '', exA: buyAmt(o), exV: Math.round(buyAmt(o) * 0.1), note: buyAmt(o) < 0 ? '공장 청구 · 수정세금계산서 수취' : '세금계산서 수취' });
+    if (isSale(o)) rows.push({ kind: 'sale', ref: o.ID, d: d, k: 0, acct: '상품매출', what: o['품목'] + (o['스펙'] ? ' ' + o['스펙'] : ''), who: o['업체명'], inA: supply(o), inV: vat(o), note: o['매출계산서상태'] === '수정요청' ? '세금계산서 수정요청' + (o['매출계산서메모'] ? ': ' + o['매출계산서메모'] : '') : o['세금계산서'] ? '세금계산서 발행' + (o['발행일'] ? ' ' + dShort(o['발행일']) : '') : '세금계산서 미발행' });
+    if (buyAmt(o)) rows.push({ kind: 'buy', ref: o.ID, d: d, k: 1, acct: '상품매입', what: (/^\[(클레임|재납품)/.test(o['품목'] || '') ? o['품목'] + ' · ' : '') + (o['규격'] || o['품목']) + ' (' + o['업체명'] + ' 납품분)', who: o['매입처'] || '', exA: buyAmt(o), exV: Math.round(buyAmt(o) * 0.1), note: (buyAmt(o) < 0 ? '공장 청구 · 수정세금계산서 ' : '세금계산서 ') + (o['매입계산서'] === '수정요청' ? '수정요청' + (o['매입계산서메모'] ? ': ' + o['매입계산서메모'] : '') : o['매입계산서'] === '수취' ? '수취' + (o['매입계산서일'] ? ' ' + dShort(o['매입계산서일']) : '') : '미수령') });
   });
   S.expenses.forEach(function (e) {
     var d = e['사용일']; if (!inP(d) || expPersonal(e)) return;
     var v = expVat(e), amt = n(e['금액']), r = reasonText(e);
-    var row = { d: d, k: 2, acct: ACCT[e['분류']] || '잡비', what: e['분류'] + (e['비고'] ? ' · ' + e['비고'] : ''), who: e['사용처'], note: e['결제수단'] + (e['카드'] ? ' ' + e['카드'] : '') + (r ? ' / 불공제: ' + r : '') };
+    var row = { kind: 'exp', ref: e.ID, d: d, k: 2, acct: ACCT[e['분류']] || '잡비', what: e['분류'] + (e['비고'] ? ' · ' + e['비고'] : ''), who: e['사용처'], note: e['결제수단'] + (e['카드'] ? ' ' + e['카드'] : '') + (r ? ' / 불공제: ' + r : '') };
     if (expAsset(e)) { row.asA = amt - v; row.asV = v; } else { row.exA = amt - v; row.exV = v; }
     rows.push(row);
   });
@@ -5613,7 +5619,7 @@ function renderBook() {
   rows.forEach(function (r) {
     if (r.d.slice(0, 7) !== curM) { flush(); curM = r.d.slice(0, 7); }
     mRows.push(r);
-    body += '<tr' + (r.inA ? ' class="sale"' : '') + '><td class="num">' + dShort(r.d) + '</td><td class="acct">' + esc(r.acct) + '</td><td class="item">' + esc(r.what) + '</td><td>' + esc(r.who) + '</td>' + cells(r) + '<td class="item' + (/미발행/.test(r.note) ? ' nt-red' : /수취/.test(r.note) ? ' nt-blue' : '') + '" style="min-width:140px">' + esc(r.note) + '</td></tr>';
+    body += '<tr' + (r.inA ? ' class="sale"' : '') + '><td class="num">' + dShort(r.d) + '</td><td class="acct">' + esc(r.acct) + '</td><td class="item">' + esc(r.what) + '</td><td>' + esc(r.who) + '</td>' + cells(r) + '<td class="item' + (/미발행|미수령|수정요청/.test(r.note) ? ' nt-red' : /수취|발행/.test(r.note) ? ' nt-blue' : '') + '" style="min-width:140px">' + esc(r.note) + '</td></tr>';
   });
   flush();
   $('#bTable').innerHTML = head + '<tbody>' + body + '</tbody>';
@@ -7512,6 +7518,126 @@ function dcBoot() {
     window.DC_LABEL = day + hh + ' 저장본 표시 중 · 최신으로 맞추는 중…'; setSync(window.DC_LABEL);
     return true;
   });
+}
+
+/* =========================================================
+   세금계산서 증빙 상태 — 매출(발행/미발행/수정요청) · 매입(수취/미수령/수정요청)
+   간편장부·총정리·공장 정산 어디서 바꿔도 같은 줄(총정리)에 저장
+   ========================================================= */
+function saleTaxSt(o) { return o['매출계산서상태'] === '수정요청' ? '수정요청' : (o['세금계산서'] ? '발행' : '미발행'); }
+function buyTaxSt(o) { return o['매입계산서'] === '수정요청' ? '수정요청' : (o['매입계산서'] === '수취' ? '수취' : '미수령'); }
+function taxChip(o, side) {
+  if (side === 'sale' ? !isSale(o) : !buyAmt(o)) return '';
+  var st = side === 'sale' ? saleTaxSt(o) : buyTaxSt(o), cls = st === '수정요청' ? 'fix' : (st === '발행' || st === '수취') ? 'ok' : 'no';
+  var d = side === 'sale' ? o['발행일'] : o['매입계산서일'], memo = side === 'sale' ? o['매출계산서메모'] : o['매입계산서메모'];
+  var label = (side === 'sale' ? '' : '') + st + (d && cls === 'ok' ? ' ' + dShort(d) : '');
+  return '<button type="button" class="txchip ' + cls + '" data-txid="' + esc(o.ID) + '" data-txside="' + side + '" title="' + esc((side === 'sale' ? '매출 세금계산서: ' : '매입 세금계산서: ') + st + (memo ? ' · ' + memo : '') + ' — 눌러서 바꾸기') + '">' + (side === 'sale' ? '<i>매출</i>' : '<i>매입</i>') + esc(label) + '</button>';
+}
+/** 상태 바꾸기 메뉴 */
+var txMenuEl = null;
+function txCloseMenu() { if (txMenuEl) { txMenuEl.remove(); txMenuEl = null; } }
+function txOpenMenu(btn) {
+  txCloseMenu();
+  var o = orderById(btn.getAttribute('data-txid')), side = btn.getAttribute('data-txside'); if (!o) return;
+  var cur = side === 'sale' ? saleTaxSt(o) : buyTaxSt(o);
+  var opts = side === 'sale' ? [['발행', '✔ 발행 완료'], ['미발행', '✕ 미발행으로'], ['수정요청', '⚠ 수정 요청 (메모)']] : [['수취', '✔ 수취 완료'], ['미수령', '✕ 미수령으로'], ['수정요청', '⚠ 수정 요청 (메모)']];
+  var who = side === 'sale' ? o['업체명'] : (o['매입처'] || '매입처');
+  txMenuEl = document.createElement('div'); txMenuEl.className = 'txmenu';
+  txMenuEl.innerHTML = '<div class="txm-h">' + esc(who) + ' · ' + (side === 'sale' ? '매출' : '매입') + ' 세금계산서<span>' + esc(o['품목'] || '') + '</span></div>' +
+    opts.map(function (x) { return '<button type="button" data-txset="' + x[0] + '"' + (x[0] === cur ? ' class="on"' : '') + '>' + x[1] + '</button>'; }).join('') +
+    '<div class="txm-d"><label>날짜 <input type="date" id="txDate" value="' + esc((side === 'sale' ? o['발행일'] : o['매입계산서일']) || today()) + '"></label></div>';
+  txMenuEl._t = Date.now(); document.body.appendChild(txMenuEl);
+  var r = btn.getBoundingClientRect(), mw = 230;
+  txMenuEl.style.left = Math.max(8, Math.min(window.innerWidth - mw - 8, r.left)) + 'px';
+  var top = r.bottom + 4; if (top + 220 > window.innerHeight) top = Math.max(8, r.top - 224);
+  txMenuEl.style.top = top + 'px';
+  txMenuEl.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-txset]'); if (!b) return;
+    var st = b.getAttribute('data-txset'), date = $('#txDate').value || today();
+    if (st === '수정요청') {
+      txCloseMenu();
+      ask('세금계산서 수정 요청', who + ' · ' + (o['품목'] || '') + '\n무엇을 고쳐야 하는지 적어 두면 장부·목록에 같이 보여요.', [{ name: 'memo', label: '요청 내용', wide: true }]).then(function (f) {
+        if (!f) return; api('setTaxDoc', { id: o.ID, side: side, status: '수정요청', memo: (f.memo || '').trim() }).then(function () { toast('수정 요청으로 바꿨어요.'); }).catch(function () {});
+      });
+      return;
+    }
+    txCloseMenu();
+    api('setTaxDoc', { id: o.ID, side: side, status: st, date: date }).then(function () { toast((side === 'sale' ? '매출' : '매입') + ' 세금계산서: ' + st); }).catch(function () {});
+  });
+}
+document.addEventListener('click', function (e) {
+  var b = e.target.closest('[data-txid]');
+  if (b) { e.preventDefault(); e.stopPropagation(); txOpenMenu(b); return; }
+  if (txMenuEl && !e.target.closest('.txmenu')) txCloseMenu();
+}, true);
+window.addEventListener('scroll', function (e) { if (txMenuEl && Date.now() - (txMenuEl._t || 0) > 400 && !(e.target && e.target.closest && e.target.closest('.txmenu'))) txCloseMenu(); }, true);
+
+/* ---- 총정리: 매입 칸에 수취 상태, 매출 계산서 칩에 수정요청 표시 ---- */
+var _renderListTX = renderList;
+renderList = function () {
+  _renderListTX();
+  $$('#oTable tbody tr[data-id]').forEach(function (tr) {
+    var o = orderById(tr.getAttribute('data-id')); if (!o) return;
+    var buyCell = tr.children[6];
+    if (buyCell && buyAmt(o) && !buyCell.querySelector('.txchip')) buyCell.insertAdjacentHTML('beforeend', '<br>' + taxChip(o, 'buy'));
+    if (o['매출계산서상태'] === '수정요청') { var inv = tr.querySelector('[data-act="inv"]'); if (inv) inv.insertAdjacentHTML('afterend', ' ' + taxChip(o, 'sale')); }
+  });
+  $$('#oCards .card[data-id]').forEach(function (cd) {
+    var o = orderById(cd.getAttribute('data-id')); if (!o || !buyAmt(o)) return;
+    var acts = cd.querySelector('.acts'); if (acts && !acts.querySelector('.txchip')) acts.insertAdjacentHTML('afterbegin', taxChip(o, 'buy'));
+  });
+};
+
+/* ---- 간편장부: 비고 칸 = 상태 칩, 줄 누르면 세부 내용으로 ---- */
+var _renderBookTX = renderBook;
+renderBook = function () {
+  _renderBookTX();
+  var y = $('#bYear').value, month = +$('#bMonth').value || 0, rows = bookEntries(y, month, $('#bBasis').value), i = 0;
+  $$('#bTable tbody tr').forEach(function (tr) {
+    if (tr.classList.contains('mt') || tr.classList.contains('cum') || !tr.children.length || tr.querySelector('.empty')) return;
+    var r = rows[i++]; if (!r) return;
+    tr.classList.add('bk-go'); tr.setAttribute('data-bkt', r.kind || ''); tr.setAttribute('data-bkid', r.ref || ''); tr.title = '눌러서 세부 내용 보기';
+    var o = r.ref && (r.kind === 'sale' || r.kind === 'buy') ? orderById(r.ref) : null;
+    if (o) { var note = tr.lastElementChild; note.innerHTML = taxChip(o, r.kind) + ((r.kind === 'sale' ? o['매출계산서메모'] : o['매입계산서메모']) && (r.kind === 'sale' ? saleTaxSt(o) : buyTaxSt(o)) === '수정요청' ? '<div class="sub">' + esc(r.kind === 'sale' ? o['매출계산서메모'] : o['매입계산서메모']) + '</div>' : ''); note.className = 'item'; }
+  });
+  // 위쪽 요약: 미발행·미수령 건수
+  var noS = rows.filter(function (r) { var o = r.kind === 'sale' && orderById(r.ref); return o && saleTaxSt(o) !== '발행'; }).length;
+  var noB = rows.filter(function (r) { var o = r.kind === 'buy' && orderById(r.ref); return o && buyTaxSt(o) !== '수취'; }).length;
+  var bc = $('#bCount'); if (bc) bc.innerHTML = rows.length + '건 · <span class="red">매출 미발행·수정 ' + noS + '</span> · <span class="red">매입 미수령·수정 ' + noB + '</span>';
+};
+$('#bTable').addEventListener('click', function (e) {
+  if (e.target.closest('[data-txid]')) return;
+  var tr = e.target.closest('tr.bk-go'); if (!tr) return;
+  var k = tr.getAttribute('data-bkt'), id = tr.getAttribute('data-bkid');
+  if (k === 'sale' || k === 'buy') {
+    var o = orderById(id); if (!o) return;
+    if (k === 'buy' && o['매입처'] && typeof openVp === 'function') {
+      var ym = String(tr.querySelector('td') ? (o['발주일'] || '') : '').slice(0, 7);
+      if (typeof vpPer !== 'undefined' && /^\d{4}-\d{2}$/.test(ym)) { vpPer.months = [ym]; vpPer.from = vpPer.to = ''; }
+      showTab('vpay'); openVp(o['매입처']);
+      setTimeout(function () { var b = document.querySelector('#vpM [data-vpst="' + id + '"]'); var row = b && b.closest('tr'); if (row) { row.scrollIntoView({ block: 'center' }); row.classList.add('flash'); setTimeout(function () { row.classList.remove('flash'); }, 2200); } }, 120);
+      return;
+    }
+    showTab('list');
+    $('#qCo').value = o['업체명']; $('#qMonth').value = ''; $('#qState').value = ''; if ($('#qRep')) $('#qRep').value = ''; $('#qText').value = o['품목'] || '';
+    if (typeof PG !== 'undefined' && PG.list) PG.list.page = 1;
+    renderList();
+    setTimeout(function () { var row = document.querySelector('#oTable tr[data-id="' + id + '"], #oCards .card[data-id="' + id + '"], #nsBox .ns-row[data-id="' + id + '"]'); if (row) { row.scrollIntoView({ block: 'center' }); row.classList.add('flash'); setTimeout(function () { row.classList.remove('flash'); }, 2200); } }, 60);
+  } else if (k === 'exp') {
+    var x = typeof expById === 'function' ? expById(id) : null; showTab('exp'); if (x && typeof editExp === 'function') editExp(x);
+  }
+});
+
+/* ---- 공장 정산 상세: 매입 줄마다 수취 상태 ---- */
+if (typeof renderVpDetail === 'function') {
+  var _renderVpDetailTX = renderVpDetail;
+  renderVpDetail = function () {
+    _renderVpDetailTX();
+    $$('#vpM [data-vpst]').forEach(function (b) {
+      var o = orderById(b.getAttribute('data-vpst')); if (!o || b.parentNode.querySelector('.txchip')) return;
+      b.insertAdjacentHTML('afterend', ' ' + taxChip(o, 'buy'));
+    });
+  };
 }
 
 /* =========================================================
@@ -9752,7 +9878,24 @@ var Mock = (function () {
       D.sends.push({ '일시': nowStr(), '업체명': r.co, '발주일': r.order, '품목': r.item || '', '공장': r.factory, '방법': r.method === 'fax' ? '팩스' : '이메일', '받는곳': to, '문서': r.file.name, 'Rev': r.rev, '결과': '체험판(실제 전송 안 함)', '파일': '' });
       return { to: to };
     },
-    setInvoice: function (r) { var o = find(D.orders, 'ID', r.id); o['세금계산서'] = !!r.issued; o['발행일'] = r.issued ? r.date : ''; },
+    setInvoice: function (r) { var o = find(D.orders, 'ID', r.id); o['세금계산서'] = !!r.issued; o['발행일'] = r.issued ? r.date : ''; if (r.issued) { o['매출계산서상태'] = ''; o['매출계산서메모'] = ''; } },
+    setTaxDoc: function (r) {
+      var ids = r.ids || [r.id], d = r.date || today(), cnt = 0;
+      ids.forEach(function (id) {
+        var o = find(D.orders, 'ID', id); if (!o) return; cnt++;
+        if (r.side === 'sale') {
+          if (r.status === '발행') { o['세금계산서'] = true; o['발행일'] = d; o['매출계산서상태'] = ''; o['매출계산서메모'] = ''; }
+          else if (r.status === '미발행') { o['세금계산서'] = false; o['발행일'] = ''; o['매출계산서상태'] = ''; o['매출계산서메모'] = ''; }
+          else if (r.status === '수정요청') { o['매출계산서상태'] = '수정요청'; o['매출계산서메모'] = r.memo || ''; }
+        } else {
+          if (r.status === '수취') { o['매입계산서'] = '수취'; o['매입계산서일'] = d; o['매입계산서메모'] = ''; }
+          else if (r.status === '미수령') { o['매입계산서'] = ''; o['매입계산서일'] = ''; o['매입계산서메모'] = ''; }
+          else if (r.status === '수정요청') { o['매입계산서'] = '수정요청'; o['매입계산서메모'] = r.memo || ''; }
+        }
+      });
+      if (!cnt) throw new Error('그 줄을 찾지 못했어요. 새로고침 후 다시 해 주세요.');
+      return { count: cnt };
+    },
     setInvoiceMany: function (r) { (r.items || []).forEach(function (it) { var o = find(D.orders, 'ID', it.id); if (!o) return; o['세금계산서'] = !r.off; o['발행일'] = r.off ? '' : (it.date || today()); }); return { count: (r.items || []).length }; },
     setDigest: function (r) { D.appSettings = D.appSettings || {}; D.appSettings.digest = JSON.stringify({ on: !!r.on, hour: r.hour, to: r.to, weekend: !!r.weekend }); return {}; },
     sendDigest: function (r) { return { to: r.to || '시트 주인', preview: true }; },
@@ -9807,7 +9950,7 @@ var LOG_LABELS = {
   saveClient: ['수정', '매출거래처 정보'], deleteClient: ['삭제', '매출거래처 삭제'], importClients: ['입력', '매출거래처 엑셀 올리기'], importFactories: ['입력', '매입거래처 엑셀 올리기'],
   saveExpense: ['입력', '카드·경비'], saveExpenses: ['입력', '카드·경비(여러 건)'], deleteExpenses: ['삭제', '카드·경비 삭제'], saveTaxSettings: ['설정', '세금 설정'], writeBook: ['입력', '간편장부 시트 만들기'],
   saveAppSetting: ['설정', '앱 설정'], saveUser: ['계정', '직원 계정 저장'], deleteUser: ['계정', '직원 계정 삭제'], saveMaster: ['계정', '마스터 정보 변경'], changeMyPassword: ['계정', '내 비밀번호 변경'],
-  saveClaim: ['입력', '불량·클레임 저장'], deleteClaim: ['삭제', '불량·클레임 삭제'],
+  saveClaim: ['입력', '불량·클레임 저장'], setTaxDoc: ['수정', '세금계산서 상태'], deleteClaim: ['삭제', '불량·클레임 삭제'],
   resetConfirm: ['계정', '마스터 비밀번호 재설정'], resetRequest: ['계정', '비밀번호 재설정 코드 요청'], logoutAll: ['계정', '모든 기기 로그아웃']
 };
 function logSummary(action, r, look) {
@@ -9845,7 +9988,7 @@ function logSummary(action, r, look) {
   if (r.ids) parts.push(r.ids.length + '건' + (r.date ? ' · ' + r.date : '') + (r.paid === false ? ' · 취소' : ''));
   if (r.id && !o && !r.user && action !== 'deleteUser') { var px = [r.paid === false ? '취소' : r.paid ? '처리' : '', r.date || ''].filter(Boolean).join(' · '); if (px) parts.push(px); }
   if (r.lines) parts.push(r.lines.length + '줄 (' + r.lines.map(function (l) { return l.step; }).join(', ') + ')');
-  if (r.status) parts.push('상태 ' + r.status);
+  if (r.status) parts.push((r.side === 'buy' ? '매입 계산서 ' : r.side === 'sale' ? '매출 계산서 ' : '상태 ') + r.status + (r.memo ? ' (' + r.memo + ')' : ''));
   if (r.reason) parts.push('사유: ' + r.reason);
   if (r.name && action === 'saveAppSetting') parts.push(r.name);
   if (r.method) parts.push(r.method + (r.to ? ' → ' + r.to : '') + (r.factory ? ' · ' + r.factory : ''));
