@@ -61,9 +61,12 @@ const STEP_KEYS = ['', '동판', '원단입고', '인쇄', '후가공'];
 /* ================= 최초 1회 실행 ================= */
 function setup() {
   const ss = ss_();
-  ss.setSpreadsheetTimeZone(CONFIG.TZ);
-  ensureAll_();
-  fillMissingIds_();
+  try { ss.setSpreadsheetTimeZone(CONFIG.TZ); } catch (e) { Logger.log('시간대 설정 건너뜀: ' + e.message); }
+  const step = function (label, fn) { try { fn(); } catch (e) { throw new Error(label + ' — ' + e.message); } };
+  step('「' + mainSheet_().getName() + '」 탭 3행 오른쪽에 앱용 열 제목 추가', function () { ensureMainCols_(mainSheet_()); });
+  Object.keys(TABLES).forEach(function (k) { step('「' + TABLES[k].name + '」 탭 만들기·열 제목 맞추기', function () { ensureTable_(TABLES[k]); }); });
+  Object.keys(KV).forEach(function (k) { step('「' + KV[k].name + '」 탭 만들기', function () { ensureTable_(KV[k]); }); });
+  step('「' + mainSheet_().getName() + '」 탭 ID 열 채우기', function () { fillMissingIds_(); });
   const props = PropertiesService.getScriptProperties();
   let key = props.getProperty('API_KEY');
   if (!key) { key = Utilities.getUuid().replace(/-/g, '').slice(0, 12); props.setProperty('API_KEY', key); }
@@ -80,6 +83,7 @@ function onOpen() {
     SpreadsheetApp.getUi().createMenu('리손 앱')
       .addItem('① 처음 설정 (마스터 비밀번호 만들기)', 'setupFromMenu')
       .addItem('마스터 아이디·비밀번호 보기', 'showMasterFromMenu')
+      .addItem('보호(잠금) 확인', 'checkProtectionFromMenu')
       .addToUi();
   } catch (e) {}
 }
@@ -98,11 +102,32 @@ function setupFromMenu() {
     props.setProperty('DATA_SHEET_ID', id); SS_CACHE_ = ss;
   }
   let key;
-  try { key = setup(); } catch (e) { ui.alert('설정하지 못했어요', e.message, ui.ButtonSet.OK); return; }
+  try { key = setup(); } catch (e) {
+    const blocked = protectionReport_();
+    ui.alert('설정하지 못했어요', '막힌 단계: ' + e.message +
+      (blocked.length ? '\n\n지금 계정(' + Session.getEffectiveUser().getEmail() + ')이 고칠 수 없는 보호:\n· ' + blocked.slice(0, 12).join('\n· ') +
+        '\n\n시트 주인 계정에서 [데이터] → [시트 및 범위 보호] → 위 항목마다 [권한 변경]에 이 계정을 추가하거나 보호를 지워 주세요.' : ''), ui.ButtonSet.OK);
+    return;
+  }
   const m = masterGet_() || {};
   ui.alert('설정 완료',
     '데이터 시트: ' + ss_().getName() + ' (총정리 탭: ' + mainSheet_().getName() + ')\n\n마스터 로그인\n아이디: ' + (m.id || 'admin') + '\n비밀번호: ' + (m.hash ? '(앱에서 바꾼 비밀번호)' : key) +
     '\n\n다음: Apps Script 화면 오른쪽 위 [배포] → [새 배포] → 유형 [웹 앱], 실행: 나, 액세스: 모든 사용자 → 배포 후 나온 웹 앱 주소를 앱 첫 화면에 넣으세요.', ui.ButtonSet.OK);
+}
+/** 지금 계정이 고칠 수 없는 보호 목록 */
+function protectionReport_() {
+  const out = [];
+  try {
+    ss_().getSheets().forEach(function (sh) {
+      sh.getProtections(SpreadsheetApp.ProtectionType.SHEET).forEach(function (p) { if (!p.canEdit()) out.push('「' + sh.getName() + '」 탭 전체' + (p.getDescription() ? ' (' + p.getDescription() + ')' : '')); });
+      sh.getProtections(SpreadsheetApp.ProtectionType.RANGE).forEach(function (p) { if (!p.canEdit()) { let a1 = ''; try { a1 = p.getRange().getA1Notation(); } catch (e) {} out.push('「' + sh.getName() + '」 ' + a1 + ' 범위' + (p.getDescription() ? ' (' + p.getDescription() + ')' : '')); } });
+    });
+  } catch (e) { out.push('(보호 목록을 읽지 못했어요: ' + e.message + ')'); }
+  return out;
+}
+function checkProtectionFromMenu() {
+  const ui = SpreadsheetApp.getUi(), b = protectionReport_();
+  ui.alert('보호 확인', b.length ? '지금 계정(' + Session.getEffectiveUser().getEmail() + ')이 고칠 수 없는 곳:\n· ' + b.join('\n· ') : '막힌 곳이 없어요. [① 처음 설정]을 다시 눌러 보세요.', ui.ButtonSet.OK);
 }
 function showMasterFromMenu() {
   const m = masterGet_() || {}, key = PropertiesService.getScriptProperties().getProperty('API_KEY');
