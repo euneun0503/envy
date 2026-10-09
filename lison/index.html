@@ -2096,7 +2096,7 @@ function postServer(action, payload) {
     });
 }
 function enqueue(action, payload, quietErr) {
-  pendingN++; prog(true); setSync(pendingN > 1 ? '저장 중… ' + pendingN + '건' : (action === 'load' ? '불러오는 중…' : '저장 중…'));
+  pendingN++; prog(true); setSync(pendingN > 1 ? '저장 중… ' + pendingN + '건' : (action === 'load' ? (window.DC_LABEL || '불러오는 중…') : '저장 중…'));
   var p = sendQueue.then(function () { return postServer(action, payload); });
   sendQueue = p.then(function () {}, function () {});
   return p.then(function (j) {
@@ -7467,6 +7467,54 @@ $('#setForm').addEventListener('submit', function () {
 $('#setM').addEventListener('click', function (e) { if (e.target.closest('[data-close="setM"]') || e.target === this) { favDraft = null; favApply(); } });
 
 /* =========================================================
+   마지막 데이터를 이 기기에 보관 → 다시 열면 바로 보여주고, 뒤에서 시트와 맞춤
+   (IndexedDB · 로그인한 계정·웹 앱 주소별 · 로그아웃하면 지움)
+   ========================================================= */
+var DC_ON = typeof indexedDB !== 'undefined' && !DEMO, dcBusy = false, dcTimer = 0;
+function dcDb() {
+  if (dcDb._p) return dcDb._p;
+  dcDb._p = new Promise(function (res) {
+    try { var r = indexedDB.open('lison_cache', 1); r.onupgradeneeded = function () { r.result.createObjectStore('kv'); }; r.onsuccess = function () { res(r.result); }; r.onerror = function () { res(null); }; }
+    catch (e) { res(null); }
+  });
+  return dcDb._p;
+}
+function dcKey() { var me = {}; try { me = JSON.parse(store.get('me') || '{}') || {}; } catch (e) {} return (store.get('url') || '') + '|' + (me.id || ''); }
+function dcGet() {
+  if (!DC_ON) return Promise.resolve(null);
+  return dcDb().then(function (db) {
+    if (!db) return null;
+    return new Promise(function (res) { try { var q = db.transaction('kv').objectStore('kv').get(dcKey()); q.onsuccess = function () { res(q.result || null); }; q.onerror = function () { res(null); }; } catch (e) { res(null); } });
+  });
+}
+function dcPut(d) {
+  if (!DC_ON || !d || !d.orders) return;
+  clearTimeout(dcTimer);
+  dcTimer = setTimeout(function () {
+    var copy; try { copy = JSON.parse(JSON.stringify(d)); } catch (e) { return; }
+    dcDb().then(function (db) { if (!db) return; try { db.transaction('kv', 'readwrite').objectStore('kv').put({ t: Date.now(), data: copy }, dcKey()); } catch (e) {} });
+  }, 800);
+}
+function dcClear() { if (!DC_ON) return; dcDb().then(function (db) { if (!db) return; try { db.transaction('kv', 'readwrite').objectStore('kv').clear(); } catch (e) {} }); }
+// 서버에서 받은 데이터가 화면에 들어갈 때마다 보관 (화면 먼저 바꾼 임시 데이터·보관본 띄우기는 제외)
+var _applyDataDC = applyData;
+applyData = function (d, local) { _applyDataDC(d, local); if (!local && !dcBusy) { window.DC_LABEL = ''; dcPut(d); } };
+// 로그아웃하면 이 기기 보관본도 지움
+var _logoutDC = logout;
+logout = function () { dcClear(); _logoutDC(); };
+/** 처음 열 때: 보관본을 먼저 보여주고 시트와 맞추기 */
+function dcBoot() {
+  return dcGet().then(function (c) {
+    if (!c || !c.data) return false;
+    dcBusy = true; try { _applyDataDC(c.data, true); } finally { dcBusy = false; }
+    var tm = new Date(c.t), hh = ('0' + tm.getHours()).slice(-2) + ':' + ('0' + tm.getMinutes()).slice(-2);
+    var day = tm.toDateString() === new Date().toDateString() ? '' : (tm.getMonth() + 1) + '/' + tm.getDate() + ' ';
+    window.DC_LABEL = day + hh + ' 저장본 표시 중 · 최신으로 맞추는 중…'; setSync(window.DC_LABEL);
+    return true;
+  });
+}
+
+/* =========================================================
    포인트 색 직접 고르기: 원형 색상판 · HTML 코드(#RRGGBB) · 이미지 스포이트 · 화면 스포이트
    고른 한 색에서 버튼·띠·배경 톤·차트 색(밝게/어둡게 모두)을 자동으로 만듦
    ========================================================= */
@@ -10168,7 +10216,7 @@ $('#dsAppSave').addEventListener('click', function () {
     return;
   }
   renderAll();
-  if (store.get('url') && authKey()) { applyPerms(); setSync('불러오는 중…'); refresh(true); }
+  if (store.get('url') && authKey()) { applyPerms(); setSync('불러오는 중…'); (typeof dcBoot === 'function' ? dcBoot() : Promise.resolve(false)).then(function () { refresh(true); }, function () { refresh(true); }); }
   else showLogin();
 })();
 </script>

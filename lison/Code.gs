@@ -100,7 +100,7 @@ function setupFromMenu() {
     const id = sheetIdOf_(url);
     if (!id) { ui.alert('시트 주소가 아니에요', '구글 시트 주소(https://docs.google.com/spreadsheets/d/…)를 그대로 붙여넣어 주세요.', ui.ButtonSet.OK); return; }
     let ss; try { ss = SpreadsheetApp.openById(id); } catch (e) { ui.alert('시트를 열 수 없어요', '지금 계정(' + Session.getEffectiveUser().getEmail() + ')이 그 시트의 편집자인지 확인하세요.', ui.ButtonSet.OK); return; }
-    props.setProperty('DATA_SHEET_ID', id); SS_CACHE_ = ss;
+    props.setProperty('DATA_SHEET_ID', id); SS_CACHE_ = ss; MAIN_CACHE_ = null;
   }
   let key;
   try { key = setup(); } catch (e) {
@@ -139,7 +139,7 @@ function pickMainFromMenu() {
   const name = String(r.getResponseText() || '').trim();
   if (name && cands.indexOf(name) < 0) { ui.alert('그런 탭이 없어요', '고를 수 있는 탭: ' + cands.join(', '), ui.ButtonSet.OK); return; }
   if (name) props.setProperty('MAIN_SHEET_NAME', name); else props.deleteProperty('MAIN_SHEET_NAME');
-  SS_CACHE_ = null;
+  SS_CACHE_ = null; MAIN_CACHE_ = null;
   try { ensureMainCols_(mainSheet_()); fillMissingIds_(); } catch (e) { ui.alert('탭은 바꿨지만 열을 맞추지 못했어요', e.message, ui.ButtonSet.OK); return; }
   ui.alert('바꿨어요', '이제 앱은 「' + mainSheet_().getName() + '」 탭을 읽어요. 앱에서 새로고침을 누르세요.', ui.ButtonSet.OK);
 }
@@ -172,7 +172,7 @@ function doGet(e) {
 
 let reqForLog = null, whoForLog = null;
 function doPost(e) {
-  reqForLog = null; whoForLog = null; SS_CACHE_ = null;
+  reqForLog = null; whoForLog = null; SS_CACHE_ = null; MAIN_CACHE_ = null;
   const lock = LockService.getScriptLock();
   try {
     const req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
@@ -185,7 +185,7 @@ function doPost(e) {
     if (USER_ACTIONS_[req.action]) { const ur = USER_ACTIONS_[req.action](req, who); if (!/^(listUsers|getMaster|listLog)$/.test(req.action)) logAct_(who, req.action, req, ''); return json_(Object.assign({ ok: true }, ur)); }
     if (req.action === 'getImage') return json_(Object.assign({ ok: true }, getImage_(req)));
     lock.waitLock(25000);
-    ensureAll_();
+    ensureAllCached_();
     const snap = loadRaw_(req.action === 'load');
     const D = JSON.parse(JSON.stringify(snap.data));
     const A = actions_(D);
@@ -509,7 +509,7 @@ let SS_CACHE_ = null;
 function ss_() {
   if (SS_CACHE_) return SS_CACHE_;
   const id = PropertiesService.getScriptProperties().getProperty('DATA_SHEET_ID');
-  SS_CACHE_ = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActive();
+  SS_CACHE_ = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActive(); MAIN_CACHE_ = null;
   return SS_CACHE_;
 }
 function sheetIdOf_(s) { const m = String(s || '').match(/\/d\/([a-zA-Z0-9_-]{20,})/) || String(s || '').match(/^([a-zA-Z0-9_-]{20,})$/); return m ? m[1] : ''; }
@@ -523,17 +523,33 @@ function mainCandidates_() {
   });
   return out;
 }
+let MAIN_CACHE_ = null;
 function mainSheet_() {
+  if (MAIN_CACHE_ && SS_CACHE_) return MAIN_CACHE_;
+  MAIN_CACHE_ = mainSheetFind_(); return MAIN_CACHE_;
+}
+function mainSheetFind_() {
   const ss = ss_();
+  // 지난번에 찾은 탭이 그대로 있으면 바로 (탭 전체를 훑지 않게)
+  const auto = CacheService.getScriptCache().get('MAIN_AUTO_' + ss.getId());
+  const pick0 = PropertiesService.getScriptProperties().getProperty('MAIN_SHEET_NAME');
+  if (!pick0 && auto) { const a0 = ss.getSheetByName(auto); if (a0) return a0; }
   // 1) 마스터가 고른 탭  2) 리손총정리·총정리  3) 올해 연도가 이름에 든 탭(예: 2026년)  4) 3행 열 제목이 맞는 첫 탭
   const pick = PropertiesService.getScriptProperties().getProperty('MAIN_SHEET_NAME');
   if (pick) { const p = ss.getSheetByName(pick); if (p) return p; }
   for (let i = 0; i < CONFIG.MAIN_SHEETS.length; i++) { const s = ss.getSheetByName(CONFIG.MAIN_SHEETS[i]); if (s) return s; }
   const cands = mainCandidates_(), yr = Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy');
   const thisYear = cands.filter(function (sh) { return sh.getName().indexOf(yr) >= 0; });
-  if (thisYear.length) return thisYear[0];
-  if (cands.length) return cands[0];
+  const found = thisYear.length ? thisYear[0] : cands[0];
+  if (found) { try { CacheService.getScriptCache().put('MAIN_AUTO_' + ss.getId(), found.getName(), 21600); } catch (e) {} return found; }
   throw new Error("총정리 탭을 찾지 못했습니다. 탭 이름을 '" + CONFIG.MAIN_SHEETS[0] + "'로 하거나 3행에 발주일·업체명·품목 열 제목을 두세요.");
+}
+/** 탭·열 준비는 30분에 한 번만 (매 요청마다 모든 탭 머리줄을 읽지 않게) */
+function ensureAllCached_() {
+  const c = CacheService.getScriptCache(), k = 'ENSURED_' + ss_().getId() + '_' + (PropertiesService.getScriptProperties().getProperty('MAIN_SHEET_NAME') || '');
+  if (c.get(k)) return;
+  ensureAll_();
+  try { c.put(k, '1', 1800); } catch (e) {}
 }
 function ensureAll_() {
   ensureMainCols_(mainSheet_());
@@ -1178,8 +1194,8 @@ const USER_ACTIONS_ = {
     let ss;
     try { ss = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActive(); } catch (e) { throw new Error('시트를 열 수 없어요. 이 Apps Script를 배포한 계정(' + Session.getEffectiveUser().getEmail() + ')이 그 시트의 편집자인지 확인하세요.'); }
     if (!ss) throw new Error('시트를 열 수 없어요.');
-    SS_CACHE_ = ss;
-    let main; try { main = mainSheet_(); } catch (e) { SS_CACHE_ = null; throw new Error('그 시트에서 총정리 탭을 찾지 못했어요. 3행에 발주일·업체명·품목 열 제목이 있어야 해요.'); }
+    SS_CACHE_ = ss; MAIN_CACHE_ = null;
+    let main; try { main = mainSheet_(); } catch (e) { SS_CACHE_ = null; MAIN_CACHE_ = null; throw new Error('그 시트에서 총정리 탭을 찾지 못했어요. 3행에 발주일·업체명·품목 열 제목이 있어야 해요.'); }
     if (id) props_().setProperty('DATA_SHEET_ID', id); else props_().deleteProperty('DATA_SHEET_ID');
     ensureAll_(); fillMissingIds_();
     try { sendMail_({ to: recoveryEmail_(), name: '리손패키지', subject: '[리손패키지] 데이터 시트 연결이 바뀌었어요', body: '연결된 시트: ' + ss.getName() + '\n' + ss.getUrl() + '\n총정리 탭: ' + main.getName() + '\n일시: ' + Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd HH:mm') }); } catch (e) {}
