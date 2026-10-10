@@ -309,7 +309,7 @@
 </head><body>
 <title>리손패키지 거래처 관리 ERP</title>
 <meta name="robots" content="noindex,nofollow">
-<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbyZ_w8ZtBcM9SW6ftKfGcgW16X5vVGa7Fe9izr2eE4Eojuu4-CheI6aZtRanSPf7yiw/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
+<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbxFV6myWSMLKoYjRr0PceusJevyFVdfMZwieXKjwxN7g-ZDUPvEth9FzuMIDQHTGf0/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -2265,7 +2265,7 @@ function themeFromHex(hex) {
     <div class="pm-sec"><h3>작업의뢰서</h3><span class="sub" id="pdRev"></span><span class="sp"></span><button type="button" class="btn sm" id="pdFacts">공장 관리</button></div>
     <div class="pm-chips" id="pdFacs"></div>
     <div class="bar" style="margin-top:10px;align-items:center">
-      <button type="button" class="btn p" id="pdSpec">작업 사양 입력</button>
+      <button type="button" class="btn p" id="pdSpec">작업 사양 입력</button><button type="button" class="btn sm" id="pdFinalArtwork">최종 동판 시안 첨부·교체</button>
       <label class="pm-check" style="margin:0" hidden><input type="checkbox" id="pd_client"> 고객사 이름 넣기</label><span class="sp" style="flex:1"></span>
       <span class="sub" style="align-self:center;font-weight:600">작업의뢰서 받기</span><button type="button" class="btn sm" id="pdXlsx">엑셀</button><button type="button" class="btn sm" id="pdPdf">PDF</button><button type="button" class="btn sm" id="pdPng">PNG</button><button type="button" class="btn sm p" id="pdAll">3가지 한 번에</button><button type="button" class="btn sm" id="pdPrint">인쇄</button>
       <label class="f" style="flex:0 0 auto"><span>보낼 때 첨부</span><select id="pdAttach" class="inp" style="min-height:32px"><option value="both">엑셀 + PDF</option><option value="xlsx">엑셀만</option><option value="pdf">PDF만</option></select></label>
@@ -4576,7 +4576,7 @@ function openProd(g) {
   $('#pmSub').textContent = dShort(g.order) + ' 발주' + (g.buyers.length ? ' · 매입 ' + g.buyers.join(', ') : '') + (g.shippedOn ? ' · ' + dShort(g.shippedOn) + ' 출고됨' : '');
   $('#pm_due').value = f['납기일']; $('#pm_ship').value = f['출고예정']; $('#pm_ship').disabled = !!g.shippedOn;
   $('#pm_memo').value = f['메모']; $('#pm_reason').value = '';
-  $('#pm_ffac').value = f['원단 발주처']; $('#pm_pfac').value = f['인쇄 공장']; $('#pm_pfac').placeholder = g.buyers[0] ? g.buyers[0] + ' (매입처)' : '예) 명지페이퍼';
+  $('#pm_ffac').value = f['원단 발주처']; $('#pm_pfac').value = f['인쇄 공장']; $('#pm_pfac').placeholder = '인쇄업체를 직접 지정하세요 (원단업체와 구분)';
   $('#factNames').innerHTML = uniq((S.factories || []).map(function (x) { return x['공장명']; }).concat(factCandidates())).map(function (x) { return '<option value="' + esc(x) + '">'; }).join('');
   $('#pmReasonChips').innerHTML = REASONS.map(function (r) { return '<button type="button" class="chip" data-reason="' + esc(r) + '">' + esc(r) + '</button>'; }).join('');
   drawPm();
@@ -4907,13 +4907,40 @@ $('#pBody').addEventListener('click', function (e) { var b = e.target.closest('[
 var pd = null; // { key, fac, client }
 function cleanTel(v) { return String(v || '').replace(/^'/, ''); }
 function factoryBy(name) { return (S.factories || []).filter(function (f) { return f['공장명'] === name; })[0] || null; }
+/** 매입행마다 공정 분류. 불명확하면 임의로 인쇄업체로 지정하지 않음. */
+function woPurchaseProcesses(g) {
+  var spRow = specRowOf(g.co,g.order,g.pk), sp=spRow ? specParse(spRow) : null;
+  var mats=sp ? (sp.원단||[]) : [], lam=sp ? (sp.합지||{}) : {}, print=sp ? (sp.인쇄||{}) : {};
+  function eq(a,b){return !!String(a||'').trim() && String(a||'').trim()===String(b||'').trim();}
+  return (g.rows||[]).filter(function(o){return String(o['매입처']||'').trim();}).map(function(o){
+    var vendor=String(o['매입처']||'').trim(), specText=String(o['규격']||'')+' '+String(o['비고']||''), kind='미분류';
+    if (/동판|판비|동판대|제판/.test(specText)) kind='동판';
+    else if (/슬리터|슬릿|재단/.test(specText)) kind='슬리터';
+    else if (/인쇄|프린팅|인쇄비|(?:^|\s)\d+도/.test(specText)) kind='인쇄';
+    else if (/합지|드라이|무용제|솔벤|라미네이/.test(specText)) kind='합지';
+    else if (/\b(?:PET|CPP|OPP|LLD|NY|AL|PE|CPR)\b|증착|원단|필름|급지/i.test(specText)) kind='원단';
+    else if (sp && (mats.some(function(m){return eq(m.발주처,vendor);}) || eq(g.sc['원단 발주처'],vendor))) kind='원단';
+    else if (sp && eq(print.업체,vendor)) kind='인쇄';
+    else if (sp && (eq(lam.업체,vendor)||(lam.행||[]).some(function(m){return eq(m.업체,vendor);}) )) kind='합지';
+    else if (sp && sp.슬리터 && eq(sp.슬리터.업체,vendor)) kind='슬리터';
+    return {kind:kind,vendor:vendor,detail:String(o['규격']||''),qty:o['매입수량']||o['수량']||'',unit:o['매입단가']||o['단가']||'',amount:o['매입금액']||o['금액']||'',memo:o['비고']||''};
+  });
+}
+function woVendorFor(g,kind){
+ var spRow=specRowOf(g.co,g.order,g.pk),sp=spRow?specParse(spRow):null;
+ var explicit=kind==='인쇄'?(g.sc['인쇄 공장']|| (sp&&sp.인쇄.업체)):kind==='원단'?(g.sc['원단 발주처']||''):'';
+ if(explicit)return explicit;
+ var hits=woPurchaseProcesses(g).filter(function(x){return x.kind===kind;}).map(function(x){return x.vendor;});
+ var unique=Array.from(new Set(hits));return unique.length===1?unique[0]:'';
+}
 /** 이 주문에 관련된 공장과 각 공장이 맡은 공정 */
 function woFactories(g) {
   var out = [], map = {};
   function add(name, work) { name = String(name || '').trim(); if (!name) return; if (!map[name]) { map[name] = { name: name, works: [] }; out.push(map[name]); } if (map[name].works.indexOf(work) < 0) map[name].works.push(work); }
   if (!g.steps[2].skip) add(g.sc['원단 발주처'], '원단');
   var spPrint = typeof specRowOf === 'function' && specRowOf(g.co, g.order, g.pk) ? specOf(g).인쇄.업체 : '';
-  add(g.sc['인쇄 공장'] || (spPrint ? '' : g.buyers[0]), '인쇄');
+  add(woVendorFor(g,'인쇄'), '인쇄');
+  woPurchaseProcesses(g).forEach(function(p){if(p.kind!=='미분류')add(p.vendor,p.kind);});
   g.posts.forEach(function (p) { add(p['외주처'], p['공정']); });
   if (typeof specOf === 'function' && specRowOf(g.co, g.order, g.pk)) {
     var sp = specOf(g);
@@ -4933,10 +4960,10 @@ function woFileName(g, fac, client, ext) {
 }
 function woRows(g) {
   // 공정표: 동판 → 원단 입고 → 인쇄 → 후가공(각각) → 출고
-  var filmFac = g.sc['원단 발주처'] || '', printFac = g.sc['인쇄 공장'] || '';
+  var filmFac = woVendorFor(g,'원단'), printFac = woVendorFor(g,'인쇄');
   var specRow=(S.specs||[]).find(function(x){return x['업체명']===g.co&&x['발주일']===g.order&&String(x['품목']||'').trim()===String(g.pk||'').trim();});
   if(!printFac&&specRow){try{var sp=JSON.parse(specRow['사양']||'{}');printFac=(sp.인쇄&&sp.인쇄.업체)||sp['인쇄업체']||sp['인쇄소']||sp['인쇄공장']||sp.printFactory||'';}catch(e){}}
-  if(!printFac){var printing=g.rows.filter(function(x){return /인쇄|프린팅|인쇄비|[0-9]+도/.test(String(x['규격']||'')+' '+String(x['비고']||''));});var facs=printing.map(function(x){return x['매입처'];}).filter(Boolean);if(facs.length&&facs.every(function(x){return x===facs[0];}))printFac=facs[0];}
+
   var rows = [
     { name: '동판', fac: ((S.plates||[]).find(function(p){return g.rows.some(function(o){return String(p['주문ID']||'')===String(o.ID||'');});})||{})['동판업체']||'', plan: g.steps[1].plan, done: g.steps[1].done, memo: '' },
     { name: '원단 입고', fac: filmFac, plan: g.steps[2].plan, done: g.steps[2].done, memo: '' },
@@ -5044,6 +5071,7 @@ $('#pdM').addEventListener('click', function (e) {
 });
 $('#pd_client').addEventListener('change', function () { pd.client = this.checked; renderDetail(); });
 $('#pdSpec').addEventListener('click', function () { var g = curDetail(); if (g) openSpec(g); });
+$('#pdFinalArtwork').addEventListener('click',function(){var g=curDetail();if(!g)return;openSpec(g);setTimeout(function(){var f=$('#spFile');if(f){var box=f.closest('.sp-sec');if(box)box.scrollIntoView({block:'center'});}},80);});
 $('#pdXlsx').addEventListener('click', function () {
   var g = curDetail(), btn = this; if (!g) return; busy(btn, true);
   woXlsx(g, pd.fac).then(function (r) { deliver(r.blob, r.name, 'xlsx'); }).catch(function (e) { toast('엑셀을 만들지 못했습니다. ' + (e.message || '')); }).then(function () { busy(btn, false); });
@@ -9680,12 +9708,12 @@ function specDefaults(g) {
   return {
     제품명: m['품목'] || '', 제품규격: m['스펙'] || '', 발주량: m['수량'] === '' || m['수량'] == null ? '' : m['수량'], 발주단위: roll ? '롤' : '매', 미터: '', 미터단위: 'm',
     납기: g.due ? mmdd(g.due) : '',
-    원단: [], 원단비고: '',
-    인쇄: { 업체: g.sc['인쇄 공장'] || lastSpecVendor('인쇄.업체', g.co) || g.buyers[0] || '', 도수: '', 동판규격: '', 인쇄방향: '', 구분: '신규', 감리: '', 동판입고: '', 색상: ['', '', '', '', '', '', '', '', '', ''], 별색: [], 비고: '' },
-    합지: { 업체: lam ? lam['외주처'] : lastSpecVendor('합지.업체', g.co), 행: g.posts.filter(function (p) { return /^합지/.test(p['공정']); }).map(function (p, i) { return { 순서: (p['공정'].match(/\d차/) || [(i + 1) + '차'])[0], 업체: p['외주처'] || '', 방식: '', 방향: '' }; }), 비고: '' },
+    원단: woPurchaseProcesses(g).filter(function(x){return x.kind==='원단';}).map(function(x,i){return {구분:(i+1)+'급지',재질:x.detail,발주처:x.vendor,수량:x.qty,단위:'롤',비고:x.memo};}), 원단비고: '',
+    인쇄: { 업체: woVendorFor(g,'인쇄') || '', 도수: '', 동판규격: '', 인쇄방향: '', 구분: '신규', 감리: '', 동판입고: '', 색상: ['', '', '', '', '', '', '', '', '', ''], 별색: [], 비고: '' },
+    합지: { 업체: lam ? lam['외주처'] : woVendorFor(g,'합지'), 행: g.posts.filter(function (p) { return /^합지/.test(p['공정']); }).map(function (p, i) { return { 순서: (p['공정'].match(/\d차/) || [(i + 1) + '차'])[0], 업체: p['외주처'] || '', 방식: '', 방향: '' }; }), 비고: '' },
     후공정: roll ? ['슬리터'] : ['가공'],
     가공: { 업체: other ? other['외주처'] : '', 구분: '', 수량: m['수량'] === '' || m['수량'] == null ? '' : m['수량'], 단위: '매', 실링: '', 납기: '', 타공: '', 라운드: '', 노치: '', 옆지: '', 밑지: '', 비고: '' },
-    슬리터: { 업체: lam ? lam['외주처'] : (other ? other['외주처'] : ''), 폭: '', 폭단위: 'mm', 길이: '', 길이단위: 'm', 수량: '', 단위: '롤', 방향: '', 비고: '' },
+    슬리터: { 업체: woVendorFor(g,'슬리터') || (other && /슬리터/.test(other['공정']) ? other['외주처'] : ''), 폭: '', 폭단위: 'mm', 길이: '', 길이단위: 'm', 수량: '', 단위: '롤', 방향: '', 비고: '' },
     도안: ''
   };
 }
@@ -9794,6 +9822,14 @@ function woModel(g, fac) {
     var T = sp.슬리터, tm = mine(T.업체);
     row(30, [L('슬리터', 1, 1, tm), L('규 격', 1, 2), V(T.폭, 1, 1, 'b big'), V(T.폭 === '' ? '' : (T.폭단위 || 'mm')), V(fmtNum(T.길이), 1, 1, 'b big'), V(T.길이 === '' ? '' : (T.길이단위 || 'm')), V(fmtNum(T.수량)), V(T.수량 === '' ? '' : (T.단위 || '롤')), L('방 향', 2, 2), V(T.방향, 2, 2, 'b big')]);
     row(30, [L(T.업체 || '', 1, 1, 'vend' + tm), V(T.비고, 6, 1, T.비고 ? 'yel b big' : '')]);
+  }
+  // 공정별 매입 원본 행: 누락 없이 지시서에 보존 (공정/업체/규격/수량/단가/금액)
+  var purchases=woPurchaseProcesses(g);
+  if(purchases.length){
+    gap();
+    row(26,[L('공정별 매입 상세',12,1,'b')]);
+    row(23,[L('공정',2),L('매입업체',2),L('규격·작업내용',5),L('수량'),L('단가'),L('금액')]);
+    purchases.forEach(function(x){row(24,[V(x.kind,2,1,'b'),V(x.vendor,2,1,mine(x.vendor)),V(x.detail+(x.memo?' / '+x.memo:''),5,1,'left wrap'),V(fmtNum(x.qty)),V(fmtNum(x.unit)),V(fmtNum(x.amount))]);});
   }
   // 일정 변경 (Rev)
   if (rev) {
