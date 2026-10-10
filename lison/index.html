@@ -224,11 +224,18 @@
 .order-plate-panel{padding:12px 14px;margin-top:14px;border:1px solid #d8dce1;border-radius:10px;background:#f8f9fa}.order-plate-head,.order-plate-actions{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.order-plate-head strong{font-size:13px;color:#1f2937}.order-plate-actions{justify-content:flex-start;margin-top:8px}.order-plate-result{margin-top:8px;padding:10px;background:#fff;border:1px solid #dbe3ee;border-radius:8px;font-size:12px;line-height:1.7}.orderplate-modal{width:min(760px,94vw)!important;max-height:85vh;overflow:auto}.orderplate-matches{max-height:53vh;overflow:auto}.orderplate-hit{width:100%;border:0;border-bottom:1px solid #e5e7eb;padding:12px 9px;background:#fff;text-align:left;display:flex;gap:12px;justify-content:space-between;align-items:center;cursor:pointer;color:#1f2937}.orderplate-hit:hover{background:#f1f5f9}.orderplate-hit small{color:#667085;display:block;line-height:1.6;margin-top:5px}.orderplate-hit b{font-size:12px}.orderplate-note{margin:10px 0;padding:10px;border-radius:7px;background:#f6f7f9;color:#667085;font-size:12px}
 </style>
 <style>.pm-plate-reuse-note{display:flex;gap:9px;align-items:center;flex-wrap:wrap;background:#f2f5f8;border:1px solid #d4dce5;border-left:3px solid #1d4e89;border-radius:9px;padding:10px 12px;margin:4px 0 12px;font-size:12px;color:#253341}.pm-plate-reuse-note[hidden]{display:none!important}.pm-plate-reuse-note b{color:#1d4e89}.pm-plate-reuse-note span{flex:1 1 240px}.pm-plate-reuse-note .btn{white-space:nowrap}</style>
+<style>
+/* 주문 품명 상세 이동 + 원장보기: 기존 버튼 및 입금 선택 기능과 분리 */
+#oTable .order-item-open,#oCards .order-item-open,#pUnpaid .pay-item-open{appearance:none;border:0;background:transparent;padding:0;margin:0;font:inherit;font-weight:650;color:var(--ink);text-align:left;cursor:pointer;text-decoration:none;overflow-wrap:anywhere}
+#oTable .order-item-open:hover,#oCards .order-item-open:hover,#pUnpaid .pay-item-open:hover{color:var(--primary);text-decoration:underline;text-underline-offset:3px}
+#oTable .order-ledger-link,#oCards .order-ledger-link{appearance:none;border:0;background:none;padding:2px 0;margin-top:3px;font:inherit;font-size:11px;color:var(--muted);cursor:pointer;text-align:left}
+#oTable .order-ledger-link:hover,#oCards .order-ledger-link:hover{color:var(--primary);text-decoration:underline}
+#pUnpaid .pay-item-open{font-size:inherit}
+</style>
 </head><body>
- 
 <title>리손패키지 거래처 관리 ERP</title>
 <meta name="robots" content="noindex,nofollow">
-<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbxbsPmi_M9MiaQX9-6OaPtd6SgzBZgKDHT48SEsTlfd-McGGsz19CJr3dK7aw8WrcQV/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
+<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbxrTi15gTqc4L_UvNPjar4RmOwuFwbglMb5sIywI1b_rT2-nS58pdvWHYN6mB1569Tl/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -2771,7 +2778,7 @@ function renderList() {
   $('#oTable').innerHTML = '<thead><tr><th>발주일</th><th>업체명</th><th>품목 · Spec</th><th class="r">수량 × 단가</th><th class="r">금액</th><th>출고</th><th>매입처 · 매입금액</th><th>마진</th><th>계산서</th><th>입금</th><th></th></tr></thead><tbody>' +
     list.map(function (o) {
       return '<tr data-id="' + esc(o.ID) + '"' + (band[o.ID] ? ' class="oband"' : '') + '><td class="num">' + dShort(o['발주일']) + '</td><td><b>' + esc(o['업체명']) + '</b></td>' +
-        '<td class="item">' + esc(o['품목']) + (o['스펙'] ? '<br><span class="spec">' + esc(o['스펙']) + '</span>' : '') + '</td>' +
+        '<td class="item"><button type="button" class="order-item-open" data-act="to-prod" title="생산관리 작업진행 상세보기">' + esc(o['품목']||'(품목 없음)') + '</button>' + (o['스펙'] ? '<br><span class="spec">' + esc(o['스펙']) + '</span>' : '') + '<br><button type="button" class="order-ledger-link" data-act="to-ledger">원장보기 ↗</button></td>' +
         '<td class="r sub">' + qtyText(o) + '</td><td class="r"><b>' + (supply(o) ? won(supply(o)) : (noSale(o) ? '<span class="pill neg" title="이 주문에 매출 금액이 한 줄도 없어요. 단가·금액을 넣거나 무상 건인지 확인하세요.">⚠ 매출 없음</span>' : '-')) + '</b>' + (qtyDiff(o) ? '<div class="hint">주문 ' + won(o['금액']) + '</div>' : '') + '</td>' +
         '<td>' + chipShip(o) + '</td><td>' + esc(o['매입처']) + (buyAmt(o) ? '<br><span class="num">' + won(buyAmt(o)) + '</span>' : '') + '</td>' +
         '<td>' + marginPill(o) + '</td><td>' + chipInv(o) + '</td><td>' + chipPaid(o) + '</td>' +
@@ -2780,7 +2787,7 @@ function renderList() {
   $('#oCards').innerHTML = list.map(function (o) {
     return '<div class="card' + (band[o.ID] ? ' oband' : '') + '" data-id="' + esc(o.ID) + '">' +
       '<div class="row"><span class="co">' + esc(o['업체명']) + '</span><span class="dt">' + dShort(o['발주일']) + ' 발주' + (o['출고일'] ? ' · ' + dShort(o['출고일']) + ' 출고' : ' · 미출고') + '</span></div>' +
-      '<div class="it">' + esc(o['품목']) + (o['스펙'] ? ' <span class="spec">' + esc(o['스펙']) + '</span>' : '') + '</div>' +
+      '<div class="it"><button type="button" class="order-item-open" data-act="to-prod">' + esc(o['품목']||'(품목 없음)') + '</button>' + (o['스펙'] ? ' <span class="spec">' + esc(o['스펙']) + '</span>' : '') + '<div><button type="button" class="order-ledger-link" data-act="to-ledger">원장보기 ↗</button></div></div>' +
       '<div class="row"><span class="sub num">' + qtyText(o) + '</span><span class="amt">' + (supply(o) ? won(supply(o)) : (noSale(o) ? '<span class="pill neg">⚠ 매출 없음</span>' : '-')) + '</span></div>' +
       (o['매입처'] || buyAmt(o) ? '<div class="row buy"><span>매입 ' + esc(o['매입처']) + ' ' + (buyAmt(o) ? won(buyAmt(o)) : '') + '</span>' + marginPill(o) + '</div>' : '') +
       '<div class="acts">' + chipShip(o) + chipInv(o) + chipPaid(o) + '<span class="sp"></span><button type="button" class="btn sm" data-act="edit">수정</button><button type="button" class="btn sm" data-act="more">⋯</button></div></div>';
@@ -2791,12 +2798,20 @@ $('#nsBox').addEventListener('click', function (e) {
   if (e.target.closest('[data-nsall]')) { nsAll = !nsAll; renderList(); return; }
   if (e.target.closest('.ns-go')) setTimeout(function () { var f = $('#oForm'), u = f && f.elements['단가']; if (u) { u.focus(); u.classList.add('need'); setTimeout(function () { u.classList.remove('need'); }, 2500); } toast('빨간 매출 칸에 단가(또는 금액)를 넣고 저장하세요.'); }, 120);
 });
+function openOrderProductionDetail(o) {
+  var group=prodGroups(false).find(function(g){return g.rows&&g.rows.some(function(row){return String(row.ID)===String(o.ID);});});
+  if(!group){toast('연결된 생산관리 작업진행 상세를 찾지 못했습니다.');return;}
+  showTab('prod');
+  openProd(group);
+}
 function orderById(id) { for (var i = 0; i < S.orders.length; i++) if (S.orders[i].ID === id) return S.orders[i]; return null; }
 document.addEventListener('click', function (e) {
   var b = e.target.closest('[data-act]'); if (!b) return;
   var host = b.closest('[data-id]'); if (!host) return;
   var o = orderById(host.getAttribute('data-id')); if (!o) return;
   var act = b.getAttribute('data-act');
+  if (act === 'to-prod') { openOrderProductionDetail(o); return; }
+  if (act === 'to-ledger') { goLedger(o['업체명']); return; }
   if (act === 'edit') editOrder(o, false);
   else if (act === 'copy') editOrder(o, true);
   else if (act === 'del') delOrder(o);
@@ -5118,7 +5133,7 @@ function renderPay() {
   if (!list.length) box.innerHTML = '<div class="empty">' + (name ? esc(name) + '의 ' : '') + '미입금 건이 없습니다.</div>';
   else box.innerHTML = (name ? '' : '<p class="sub" style="margin:0 0 6px">전체 업체 미입금 ' + list.length + '건 · ' + won(list.reduce(function (s, o) { return s + total(o); }, 0)) + '원 (업체를 고르면 그 업체만 보여요)</p>') + list.map(function (o) {
     return '<label class="card" style="grid-template-columns:auto 1fr;align-items:center;cursor:pointer"><input type="checkbox" data-pid="' + esc(o.ID) + '"' + (pSel[o.ID] ? ' checked' : '') + '>' +
-      '<div style="min-width:0"><div class="row"><span class="it">' + (name ? '' : '<b>' + esc(o['업체명']) + '</b> · ') + esc(o['품목']) + '</span><span class="amt' + (total(o) < 0 ? ' red' : '') + '">' + won(total(o)) + '</span></div><div class="sub">' + (total(o) < 0 ? '<b style="color:#c4302b">클레임 차감 · 이 업체 입금 처리할 때 같이 체크하면 상계돼요</b> · ' : '') + (recognized(o) ? dShort(effShip(o)) + ' 출고' : (effShip(o) ? dShort(effShip(o)) + ' 출고 예정' : '출고 전')) + ' · 공급가 ' + won(supply(o)) + (o['세금계산서'] ? ' · 계산서 발행' : ' · 계산서 미발행') + '</div></div></label>';
+      '<div style="min-width:0"><div class="row"><span class="it">' + (name ? '' : '<b>' + esc(o['업체명']) + '</b> · ') + '<button type="button" class="pay-item-open" data-pay-ledger="' + esc(o.ID) + '" title="거래처원장 보기">' + esc(o['품목']||'(품목 없음)') + '</button></span><span class="amt' + (total(o) < 0 ? ' red' : '') + '">' + won(total(o)) + '</span></div><div class="sub">' + (total(o) < 0 ? '<b style="color:#c4302b">클레임 차감 · 이 업체 입금 처리할 때 같이 체크하면 상계돼요</b> · ' : '') + (recognized(o) ? dShort(effShip(o)) + ' 출고' : (effShip(o) ? dShort(effShip(o)) + ' 출고 예정' : '출고 전')) + ' · 공급가 ' + won(supply(o)) + (o['세금계산서'] ? ' · 계산서 발행' : ' · 계산서 미발행') + '</div></div></label>';
   }).join('');
   updatePayBtn();
   var pays = sortBy(S.payments, function (p) { return p['입금일']; }).reverse();
@@ -5134,6 +5149,11 @@ function updatePayBtn() {
   return ids;
 }
 $('#pCo').addEventListener('change', function () { pSel = {}; renderPay(); });
+$('#pUnpaid').addEventListener('click', function(e){
+  var b=e.target.closest('[data-pay-ledger]');if(!b)return;
+  e.preventDefault();e.stopPropagation();
+  var o=orderById(b.getAttribute('data-pay-ledger'));if(o)goLedger(o['업체명']);
+},true);
 $('#pUnpaid').addEventListener('change', function (e) { var id = e.target.getAttribute('data-pid'); if (id) { pSel[id] = e.target.checked; updatePayBtn(); } });
 $('#pApply').addEventListener('click', function () {
   var ids = updatePayBtn(); if (!ids.length) return;
