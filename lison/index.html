@@ -138,6 +138,16 @@
 .plate-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px 0}.plate-detail-body{padding:12px 16px 16px;max-height:52vh;overflow-y:auto}.plate-history-row{padding:10px 0;border-bottom:1px solid #e7ebe8;font-size:12px;overflow-wrap:anywhere}.plate-history-row:last-child{border:0}.plate-detail-body .inp{width:100%;margin:5px 0 9px}.plate-form-grid [name="입고일"]{min-width:0}
 .plate-detail-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}.plate-detail-summary .plate-detail-box{background:#fff}.plate-legacy-note{margin-top:10px;padding:10px 12px;border-radius:10px;background:#f5f7fa;border:1px dashed #ccd5e0;color:#516173;font-size:12px}
 @media(max-width:620px){.plate-detail-grid,.plate-detail-summary{grid-template-columns:1fr}.plate-legacy-table{min-width:820px}}
+
+/* 총정리 상세조회 표 및 공정별 일정 가로 한 줄 */
+.order-peek-grid-table{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-top:1px solid #d8dee5;border-left:1px solid #d8dee5}
+.order-peek-grid-table .order-peek-field{border-right:1px solid #d8dee5;border-bottom:1px solid #d8dee5;padding:9px 10px;min-height:57px}
+.order-peek-grid-table .order-peek-field small{font-size:10px;margin-bottom:3px}
+.order-peek-stages{table-layout:fixed;min-width:640px;font-size:11px;text-align:center}
+.order-peek-stages td,.order-peek-stages th{text-align:center!important;padding:8px 5px!important;white-space:nowrap}
+.order-peek-stages td small{color:#667280;font-size:10px}
+.order-peek-sheet{width:min(980px,calc(100vw - 30px))!important;max-width:980px!important}
+@media(max-width:650px){.order-peek-grid-table{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 
 
@@ -297,10 +307,9 @@
 #oTable td .btn.sm{padding:4px 5px;min-width:0;font-size:10px}
 </style>
 </head><body>
- 
 <title>리손패키지 거래처 관리 ERP</title>
 <meta name="robots" content="noindex,nofollow">
-<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbx5ROmiou-8xFKsYCWYjdguNKZS7Ol7QNl1etUrRNyByBke2NEAk90wdD_g8h-yXKAm/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
+<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbyZ_w8ZtBcM9SW6ftKfGcgW16X5vVGa7Fe9izr2eE4Eojuu4-CheI6aZtRanSPf7yiw/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1297,7 +1306,7 @@ function themeFromHex(hex) {
       <div class="clpager" id="sumPager"></div>
     </div>
     <div class="panel">
-      <div class="ph"><h2 id="buyTitle">매입처별 매입</h2></div>
+      <div class="ph"><h2 id="buyTitle">매입처별 매입</h2><div class="seg" id="buyScope" aria-label="매입처 표시 범위"><button type="button" data-bs="top" class="on">상위 5개</button><button type="button" data-bs="all">전체</button></div></div>
       <div class="tw"><table class="t" id="buyTable"></table></div>
     </div>
   </section>
@@ -1442,7 +1451,7 @@ function themeFromHex(hex) {
       <div class="ph"><h2>생산 일정</h2>
         <div class="bar"><div class="seg" id="pView"><button type="button" data-v="list" class="on">목록</button><button type="button" data-v="board">단계 보드</button><button type="button" data-v="cal">달력</button></div>
         <select id="prCo" class="inp" style="width:auto;min-height:36px;max-width:180px" aria-label="업체"></select><input id="prQ" class="inp" type="search" placeholder="업체·품목·공장 검색" style="width:180px;min-height:36px">
-        <select id="pFilter" class="inp" style="width:auto;min-height:36px" aria-label="보기 범위"><option value="open">진행 중</option><option value="all">전체</option><option value="done">출고 완료</option></select>
+        <div class="seg" id="pFilterTabs" aria-label="생산일정 진행상태"><button type="button" class="on" data-pf="open">진행중</button><button type="button" data-pf="done">출고완료</button><button type="button" data-pf="late">납품지연</button></div><select id="pFilter" hidden aria-label="보기 범위"><option value="open">진행중</option><option value="done">출고완료</option><option value="late">납품지연</option><option value="all">전체</option></select>
         <button type="button" class="btn sm" data-wiopen>의뢰서 엑셀 올리기</button><button type="button" class="btn sm" id="pCfg">후가공·소요일 설정</button><button type="button" class="btn sm" id="pLeadOpen">매입처별 평균 제작기간</button><button type="button" class="btn sm" id="pFacts">공장 관리</button></div>
       </div>
       <div id="pBody"></div>
@@ -2670,6 +2679,7 @@ $$('#tabs button, #bnav button').forEach(function (b) { b.addEventListener('clic
    그리기
    ========================================================= */
 var homeYM = today().slice(0, 7);
+var buyScope = 'top';
 // 저장할 때마다 모든 탭을 다시 그리지 않고 지금 보는 탭만 그림. 나머지는 열 때 그림
 var TAB_RENDER = {
   home: function () { renderHome(); renderMonthly(); }, list: function () { renderList(); }, entry: function () { updateCalc(); },
@@ -2762,7 +2772,7 @@ function renderHome() {
   $('#buyTitle').textContent = monthLabel(homeYM) + ' 매입처별 매입';
   renderDash();
   $('#buyTable').innerHTML = bl.length ? '<thead><tr><th>매입처</th><th class="r">매입 금액(공급가)</th><th class="r">비중</th></tr></thead><tbody>' +
-    bl.map(function (k) { return '<tr><td>' + esc(k) + '</td><td class="r">' + won(by[k]) + '</td><td class="r">' + (buys ? Math.round(by[k] / buys * 100) : 0) + '%</td></tr>'; }).join('') + '</tbody>'
+    (buyScope === 'top' ? bl.slice(0,5) : bl).map(function (k) { return '<tr><td>' + esc(k) + '</td><td class="r">' + won(by[k]) + '</td><td class="r">' + (buys ? Math.round(by[k] / buys * 100) : 0) + '%</td></tr>'; }).join('') + '</tbody>'
     : '<tbody><tr><td class="empty">이 달의 매입 내용이 없습니다.</td></tr></tbody>';
 }
 function summaryRows() {
@@ -2772,6 +2782,7 @@ function summaryRows() {
   }).sort(function (a, b) { return b.bal - a.bal || b.pending - a.pending; });
 }
 $('#dbBasis').addEventListener('click', function (e) { var b = e.target.closest('[data-dbb]'); if (!b) return; DBB = b.getAttribute('data-dbb'); try { localStorage.setItem('lison_dbb', DBB); } catch (er) {} renderHome(); toast(DBB === 'ship' ? '출고일 기준으로 봐요 (출고일 없으면 발주일). 세금계산서·미수와 같은 기준이에요.' : '발주일 기준으로 봐요. 시트 총정리 탭과 같은 기준이에요.'); });
+$('#buyScope').addEventListener('click',function(e){var b=e.target.closest('[data-bs]');if(!b)return;buyScope=b.dataset.bs;this.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===b);});renderHome();});
 $('#mPrev').addEventListener('click', function () { homeYM = addMonth(homeYM, -1); renderHome(); });
 $('#mNext').addEventListener('click', function () { homeYM = addMonth(homeYM, 1); renderHome(); });
 document.addEventListener('click', function (e) {
@@ -2867,23 +2878,23 @@ function orderPeekField(label,value){return '<div class="order-peek-field"><smal
 function orderPeekSection(title,inner){return '<section class="order-peek-sec"><h3>'+esc(title)+'</h3>'+inner+'</section>';}
 function openOrderPeek(o,kind){
   if(!o){toast('연결된 주문 정보를 찾을 수 없습니다.');return;}
-  var production=kind==='production', group=null;
-  if(production){group=prodGroups(false).find(function(g){return g.rows&&g.rows.some(function(row){return String(row.ID)===String(o.ID);});})||null;}
+  var production=kind==='production', group=prodGroups(false).find(function(g){return g.rows&&g.rows.some(function(row){return String(row.ID)===String(o.ID);});})||null;
   var title=String(o['품목']||'품목 미등록'), co=String(o['업체명']||'거래처 미등록');
   document.getElementById('orderPeekKicker').textContent=production?'생산 작업진행 상세 · 읽기 전용':'입금관리 · 주문 및 거래처원장 정보';
   document.getElementById('orderPeekTitle').textContent=title;
   document.getElementById('orderPeekSub').textContent=co+' · 주문 ID '+String(o.ID||'-');
-  var info=orderPeekSection('주문 기본정보','<div class="order-peek-grid">'+[
+  var info=orderPeekSection('주문 기본정보','<div class="order-peek-grid order-peek-grid-table">'+[
     orderPeekField('거래처',co),orderPeekField('발주일',dShort(o['발주일'])),
     orderPeekField('품목',title),orderPeekField('규격 / 사양',o['스펙']||o['내용 및 Spec']||''),
     orderPeekField('발주 수량',o['수량']),orderPeekField('매출 금액',won(total(o))+'원'),
     orderPeekField('출고일',dShort(o['출고일'])),orderPeekField('납기일',dShort(o['납기일']))].join('')+'</div>');
   var html=info;
+  html+=orderPeekSection('공정별 매입 상세',lisonOrderGroupDetail(o));
   if(production){
     if(group){
-      html+=orderPeekSection('생산 진행현황','<div class="order-peek-grid">'+orderPeekField('현재 단계',group.stage||'미등록')+orderPeekField('납기일',dShort(group.due))+orderPeekField('출고 예정',dShort(group.shipPlan||group.shippedOn))+orderPeekField('생산 메모',group.memo||'')+'</div>');
+      html+=orderPeekSection('생산 진행현황','<div class="order-peek-grid order-peek-grid-table">'+orderPeekField('현재 단계',group.stage||'미등록')+orderPeekField('납기일',dShort(group.due))+orderPeekField('출고 예정',dShort(group.shipPlan||group.shippedOn))+orderPeekField('생산 메모',group.memo||'')+'</div>');
       var stages=(group.steps||[]).map(function(step){return '<tr><td>'+esc(step.name||'-')+'</td><td>'+esc(step.done==='생략'?'생략':dShort(step.plan)||'-')+'</td><td>'+esc(step.done==='생략'?'생략':dShort(step.done)||'-')+'</td></tr>';}).join('');
-      html+=orderPeekSection('공정별 일정','<div class="tw"><table class="order-peek-table"><thead><tr><th>공정</th><th>예정</th><th>완료</th></tr></thead><tbody>'+stages+'</tbody></table></div>');
+      html+=orderPeekSection('공정별 일정','<div class="tw"><table class="order-peek-table order-peek-stages"><thead><tr>'+(group.steps||[]).map(function(st){return '<th>'+esc(st.name||'-')+'</th>';}).join('')+'</tr></thead><tbody><tr>'+(group.steps||[]).map(function(st){return '<td><small>예정</small><br>'+esc(dShort(st.plan)||'-')+'</td>';}).join('')+'</tr><tr>'+(group.steps||[]).map(function(st){return '<td><small>완료</small><br>'+esc(st.done==='생략'?'생략':dShort(st.done)||'-')+'</td>';}).join('')+'</tr></tbody></table></div>');
       if(group.confirmedPlate)html+=orderPeekSection('연결 동판','<span class="order-peek-status">기존 동판 사용 확정</span> <span class="order-peek-muted">'+esc(group.confirmedPlate['동판번호']||group.confirmedPlate['동판참조']||'')+'</span>');
     }else html+=orderPeekSection('생산 진행현황','<p class="order-peek-muted">이 주문에 연결된 별도 생산 일정은 아직 없습니다.</p>');
   }else{
@@ -2893,7 +2904,7 @@ function openOrderPeek(o,kind){
     html+=orderPeekSection('거래처원장 요약 (현재 조회 데이터)','<div class="order-peek-grid">'+orderPeekField('매출 주문 건수',other.length+'건')+orderPeekField('매출 주문 합계',won(otherTotal)+'원')+orderPeekField('미입금 주문 건수',unpaid.length+'건')+orderPeekField('미입금 주문 합계',won(unpaid.reduce(function(sum,x){return sum+total(x);},0))+'원')+'</div><p class="order-peek-muted" style="margin-top:9px">주문 상태 기준 요약입니다. 부분 입금·이월 잔액 등이 반영된 실제 거래처원장 잔액과 다를 수 있습니다.</p>');
     html+=orderPeekSection('선택 주문의 입금 상태','<div class="order-peek-grid">'+orderPeekField('입금 확인',o['입금확인']?'입금 완료':'미입금')+orderPeekField('입금일',dShort(o['입금일']))+orderPeekField('입금액',o['입금액']!==''&&o['입금액']!=null?won(o['입금액'])+'원':'-')+orderPeekField('세금계산서',o['세금계산서']?'발행':'미발행')+'</div>');
   }
-  html+=orderPeekSection('공정별 매입 · 상세정보',lisonOrderGroupDetail(o));
+  if(!production)html+=orderPeekSection('생산 진행현황','<div class="order-peek-grid order-peek-grid-table">'+orderPeekField('현재 단계',group&&group.stage||'미등록')+orderPeekField('납기일',group&&dShort(group.due)||'-')+'</div>');
   var specs=(S.specs||[]).find(function(x){return x['업체명']===co&&x['발주일']===o['발주일']&&String(x['품목']||'').trim()===String(o['품목']||'').trim();});
   if(specs){var sd={};try{sd=JSON.parse(specs['사양']||'{}');}catch(e){}html+=orderPeekSection('작업 사양 · 시안','<div class="order-peek-grid">'+Object.keys(sd).filter(function(k){return typeof sd[k]!=='object'&&sd[k]!=='';}).slice(0,35).map(function(k){return orderPeekField(k,sd[k]);}).join('')+orderPeekField('등록된 시안',specs['도안']?'첨부되어 있음':'미등록')+'</div>');}
   document.getElementById('orderPeekBody').innerHTML=html;
@@ -4281,9 +4292,9 @@ function renderProd() {
     ['납기 지연·위험', late.length + '건', late.length ? late.slice(0, 2).map(function (g) { return g.co; }).join(', ') : '문제 없음', late.length > 0],
     ['공정 지연', slip.length + '건', slip.length ? slip.slice(0, 2).map(function (g) { return g.co + ' ' + g.slips[0].name; }).join(', ') : '예정일 넘긴 공정 없음', slip.length > 0]
   ].map(function (k) { return '<div class="kpi' + (k[3] ? ' alert' : '') + '"><div class="l">' + k[0] + '</div><div class="v num">' + k[1] + '</div><div class="s">' + esc(k[2]) + '</div></div>'; }).join('');
-  var list = gs.filter(function (g) { return prodFilter === 'all' || (prodFilter === 'done' ? g.done : !g.done); });
+  var list = gs.filter(function(g){return prodFilter==='all'||(prodFilter==='done'?g.done:prodFilter==='late'?(!g.done&&(g.late||g.risk)):!g.done);});
   var pcs = $('#prCo'), pcv = pcs.value, cos = uniq(gs.map(function (g) { return g.co; })).sort(function (a, b) { return a.localeCompare(b, 'ko'); });
-  var pcn = {}; cos.forEach(function (c) { pcn[c] = 0; }); gs.forEach(function (g) { if (prodFilter === 'all' || (prodFilter === 'done' ? g.done : !g.done)) pcn[g.co]++; });
+  var pcn = {}; cos.forEach(function (c) { pcn[c] = 0; }); gs.forEach(function (g) { if (prodFilter === 'all' || (prodFilter === 'done' ? g.done : prodFilter==='late' ? (!g.done&&(g.late||g.risk)) : !g.done)) pcn[g.co]++; });
   var pcHas = cos.filter(function (c) { return pcn[c] > 0; }), pcNo = cos.filter(function (c) { return !pcn[c]; });
   pcs.innerHTML = opt('', '전체 업체 (' + cos.length + ')') +
     (pcHas.length ? '<optgroup label="주문 있음 · ' + pcHas.length + '곳">' + pcHas.map(function (c) { return opt(c, c + ' (' + pcn[c] + ')'); }).join('') + '</optgroup>' : '') +
@@ -4292,7 +4303,7 @@ function renderProd() {
   var pq = $('#prQ').value.trim().toLowerCase();
   if (pcs.value) list = list.filter(function (g) { return g.co === pcs.value; });
   if (pq) list = list.filter(function (g) { return [g.co, g.items, g.pk, (g.buyers || []).join(' '), g.sc['인쇄 공장'], g.sc['원단 발주처'], (g.posts || []).map(function (p) { return p['외주처'] + ' ' + p['공정']; }).join(' '), g.sc['메모']].join(' ').toLowerCase().indexOf(pq) >= 0; });
-  list = sortBy(list, function (g) { return (g.done ? '1' + String(99999999 - Number(g.shippedOn.replace(/-/g, ''))) : '0' + (g.target || '9999')); });
+  list = list.slice().sort(function(a,b){return String(b.order||'').localeCompare(String(a.order||''))||String(b.key||'').localeCompare(String(a.key||''));});
   var body = '';
   if (prodView === 'list') {
     var totalProdPages = Math.max(1, Math.ceil(list.length / PROD_LIST_SIZE));
@@ -4872,6 +4883,7 @@ document.addEventListener('click', function (e) {
 });
 $('#pView').addEventListener('click', function (e) { var b = e.target.closest('[data-v]'); if (!b) return; prodView = b.getAttribute('data-v'); $$('#pView button').forEach(function (x) { x.classList.toggle('on', x === b); }); renderProd(); });
 $('#pFilter').addEventListener('change', function () { prodFilter = this.value; prodListPage = 1; renderProd(); });
+$('#pFilterTabs').addEventListener('click',function(ev){var btn=ev.target.closest('[data-pf]');if(!btn)return;prodFilter=btn.dataset.pf;$('#pFilter').value=prodFilter;this.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x===btn)});prodListPage=1;renderProd();});
 $('#prCo').addEventListener('change', function () { prodListPage = 1; renderProd(); });
 $('#prQ').addEventListener('input', function () { prodListPage = 1; clearTimeout(renderProd._q); renderProd._q = setTimeout(renderProd, 150); });
 $('#pBody').addEventListener('click', function (e) {
@@ -5540,7 +5552,8 @@ CF.addEventListener('submit', function (e) {
 });
 $('#cDel').addEventListener('click', function () {
   var name = CF.elements['_old'].value;
-  ask('거래처 정보 삭제', name + '의 사업자번호 등 정보만 지웁니다. 총정리의 발주 내용은 그대로입니다.', []).then(function (r) {
+  if ((S.orders||[]).some(function(o){return String(o['업체명']||'').trim()===String(name||'').trim();})){toast('발주 이력이 있는 거래처는 삭제할 수 없습니다.');return;}
+  ask('거래처 정보 삭제', name + '의 등록정보를 삭제합니다. 발주 이력이 있는 업체는 삭제할 수 없습니다.', []).then(function (r) {
     if (r) api('deleteClient', { name: name }).then(function () { closeM('cM'); toast('삭제했습니다.'); }).catch(function () {});
   });
 });
