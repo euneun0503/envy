@@ -284,10 +284,23 @@
 #lnTopRoll.ln-roll:hover{background:transparent;border:0}
 #lnTopRoll.ln-roll:hover span{text-decoration:underline}
 </style>
+
+<style id="lison-summary-one-row-20261010">
+/* 총정리 1발주 1행, 셀 넘침 방지 및 표 내부 스크롤 시 제목 고정 */
+#oTable{width:100%;table-layout:fixed;font-size:10px}
+#oTable td,#oTable th{font-size:10px;padding:5px 3px;line-height:1.35;overflow-wrap:anywhere;word-break:keep-all}
+#oTable thead th{position:sticky;top:0;z-index:2;background:#eaf0f4;white-space:nowrap}
+#oTable th:nth-child(1){width:7%}#oTable th:nth-child(2){width:11%}#oTable th:nth-child(3){width:19%}
+#oTable th:nth-child(4){width:10%}#oTable th:nth-child(5){width:9%}#oTable th:nth-child(6){width:9%}
+#oTable th:nth-child(7){width:9%}#oTable th:nth-child(8){width:8%}#oTable th:nth-child(9){width:6%}
+#oTable th:nth-child(10){width:6%}#oTable th:nth-child(11){width:6%}
+#oTable td .btn.sm{padding:4px 5px;min-width:0;font-size:10px}
+</style>
 </head><body>
+ 
 <title>리손패키지 거래처 관리 ERP</title>
 <meta name="robots" content="noindex,nofollow">
-<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbwOGmBYGYdwJXwJK1mNVRl5AFBsnza9weEDuWviIhU5u7pDGvjhBzc3xvK8CUwQMwxK/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
+<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbx5ROmiou-8xFKsYCWYjdguNKZS7Ol7QNl1etUrRNyByBke2NEAk90wdD_g8h-yXKAm/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -2820,41 +2833,30 @@ function renderNoSaleBox(rows) {
         '<span class="ns-sale">매출 <b>0</b></span><button type="button" class="btn sm ns-go" data-act="edit">매출 입력</button></div>';
     }).join('') + '</div></div>';
 }
+function lisonOrderGroupDetail(o){
+  var rows=(S.orders||[]).filter(function(x){return groupKey(x)===groupKey(o);});
+  var h='<div class="tw"><table class="order-peek-table"><thead><tr><th>공정 / 매입처</th><th>규격·내역</th><th>수량</th><th>단가</th><th>매입액</th></tr></thead><tbody>';
+  h+=rows.filter(function(x){return x['매입처']||buyAmt(x);}).map(function(x){return '<tr><td>'+esc(x['매입처']||'미지정')+'</td><td>'+esc(x['규격']||'')+'</td><td class="r">'+esc(x['매입수량']||'-')+'</td><td class="r">'+esc(x['매입단가']||'-')+'</td><td class="r">'+won(buyAmt(x))+'</td></tr>';}).join('');
+  return h+'</tbody></table></div>';
+}
+function lisonShowCancelled(){
+  var list=(S.orderCancellations||[]), unique={};
+  list.forEach(function(x){var key=(x['거래처']||'')+'|'+(x['발주일']||'')+'|'+(x['제품명']||'');if(!unique[key])unique[key]=x;});
+  var rows=Object.keys(unique).map(function(k){return unique[k];}).sort(function(a,b){return String(b['취소일시']).localeCompare(String(a['취소일시']));});
+  preview('발주 취소 이력','읽기 전용','<div class="tw"><table class="order-peek-table"><thead><tr><th>취소일시</th><th>거래처</th><th>발주일</th><th>제품명</th><th>사유</th><th>담당자</th></tr></thead><tbody>'+rows.map(function(x){return '<tr><td>'+esc(x['취소일시'])+'</td><td>'+esc(x['거래처'])+'</td><td>'+esc(x['발주일'])+'</td><td>'+esc(x['제품명'])+'</td><td>'+esc(x['사유'])+'</td><td>'+esc(x['담당자']||'-')+'</td></tr>';}).join('')+'</tbody></table></div>');
+}
 function renderList() {
-  var list = filteredOrders();
-  var sales = list.reduce(function (s, o) { return s + supply(o); }, 0), buys = list.reduce(function (s, o) { return s + buyAmt(o); }, 0);
-  $('#qSum').innerHTML = list.length + '줄 · 매출 <b class="num">' + won(sales) + '</b> · 매입 <b class="num">' + won(buys) + '</b> · 마진 <b class="num">' + won(sales - buys) + '</b>';
-  var _nsM = noSaleKeys(), _ns = [];
-  if ($('#qState').value !== 'nosale') { _ns = list.filter(function (o) { return _nsM[groupKey(o)]; }); list = list.filter(function (o) { return !_nsM[groupKey(o)]; }); }
-  renderNoSaleBox(_ns);
-  if (!list.length) { if ($('#oPager')) $('#oPager').innerHTML = ''; $('#oTable').innerHTML = '<tbody><tr><td class="empty">조건에 맞는 발주가 없습니다.</td></tr></tbody>'; $('#oCards').innerHTML = '<div class="empty">조건에 맞는 발주가 없습니다.</div>'; return; }
-  // 같은 제품 묶음(업체·발주일·품목, 부속 줄 포함)끼리 붙여 보여주고 번갈아 연한 회색
-  var _pos = {}, _ord = [];
-  list.forEach(function (o, i) { var k = groupKey(o); if (!(k in _pos)) { _pos[k] = _ord.length; _ord.push([]); } _ord[_pos[k]].push(o); });
-  list = [].concat.apply([], _ord);
-  var _bk = '', _bd = 1, band = {};
-  list.forEach(function (o) { var k = groupKey(o); if (k !== _bk) { _bd = 1 - _bd; _bk = k; } band[o.ID] = _bd; });
-  var _LP = (typeof pgSlice === 'function' && PG.list) ? pgSlice('list', list) : { rows: list, pager: '', from: 0 }, _allN = list.length;
-  list = _LP.rows;
-  if ($('#oPager')) $('#oPager').innerHTML = _LP.pager;
-  if ($('#qSum') && typeof pgPerSel === 'function') $('#qSum').insertAdjacentHTML('beforeend', ' <span class="pg-inline">' + pgPerSel('list') + (_allN > PG.list.per ? ' <span class="sub">' + (_LP.from + 1) + '–' + (_LP.from + list.length) + ' / ' + _allN + '줄</span>' : '') + '</span>');
-  $('#oTable').innerHTML = '<thead><tr><th>발주일</th><th>업체명</th><th>품목 · Spec</th><th class="r">수량 × 단가</th><th class="r">금액</th><th>출고</th><th>매입처 · 매입금액</th><th>마진</th><th>계산서</th><th>입금</th><th></th></tr></thead><tbody>' +
-    list.map(function (o) {
-      return '<tr data-id="' + esc(o.ID) + '"' + (band[o.ID] ? ' class="oband"' : '') + '><td class="num">' + dShort(o['발주일']) + '</td><td><b>' + esc(o['업체명']) + '</b></td>' +
-        '<td class="item"><button type="button" class="order-item-open" data-act="to-prod" title="생산관리 작업진행 상세보기">' + esc(o['품목']||'(품목 없음)') + '</button>' + (o['스펙'] ? '<br><span class="spec">' + esc(o['스펙']) + '</span>' : '') + '<br><button type="button" class="order-ledger-link" data-act="to-ledger">원장보기 ↗</button></td>' +
-        '<td class="r sub">' + qtyText(o) + '</td><td class="r"><b>' + (supply(o) ? won(supply(o)) : (noSale(o) ? '<span class="pill neg" title="이 주문에 매출 금액이 한 줄도 없어요. 단가·금액을 넣거나 무상 건인지 확인하세요.">⚠ 매출 없음</span>' : '-')) + '</b>' + (qtyDiff(o) ? '<div class="hint">주문 ' + won(o['금액']) + '</div>' : '') + '</td>' +
-        '<td>' + chipShip(o) + '</td><td>' + esc(o['매입처']) + (buyAmt(o) ? '<br><span class="num">' + won(buyAmt(o)) + '</span>' : '') + '</td>' +
-        '<td>' + marginPill(o) + '</td><td>' + chipInv(o) + '</td><td>' + chipPaid(o) + '</td>' +
-        '<td style="white-space:nowrap"><button type="button" class="btn sm" data-act="edit">수정</button> <button type="button" class="btn sm" data-act="more" title="복사·삭제" aria-label="복사·삭제">⋯</button></td></tr>';
-    }).join('') + '</tbody>';
-  $('#oCards').innerHTML = list.map(function (o) {
-    return '<div class="card' + (band[o.ID] ? ' oband' : '') + '" data-id="' + esc(o.ID) + '">' +
-      '<div class="row"><span class="co">' + esc(o['업체명']) + '</span><span class="dt">' + dShort(o['발주일']) + ' 발주' + (o['출고일'] ? ' · ' + dShort(o['출고일']) + ' 출고' : ' · 미출고') + '</span></div>' +
-      '<div class="it"><button type="button" class="order-item-open" data-act="to-prod">' + esc(o['품목']||'(품목 없음)') + '</button>' + (o['스펙'] ? ' <span class="spec">' + esc(o['스펙']) + '</span>' : '') + '<div><button type="button" class="order-ledger-link" data-act="to-ledger">원장보기 ↗</button></div></div>' +
-      '<div class="row"><span class="sub num">' + qtyText(o) + '</span><span class="amt">' + (supply(o) ? won(supply(o)) : (noSale(o) ? '<span class="pill neg">⚠ 매출 없음</span>' : '-')) + '</span></div>' +
-      (o['매입처'] || buyAmt(o) ? '<div class="row buy"><span>매입 ' + esc(o['매입처']) + ' ' + (buyAmt(o) ? won(buyAmt(o)) : '') + '</span>' + marginPill(o) + '</div>' : '') +
-      '<div class="acts">' + chipShip(o) + chipInv(o) + chipPaid(o) + '<span class="sp"></span><button type="button" class="btn sm" data-act="edit">수정</button><button type="button" class="btn sm" data-act="more">⋯</button></div></div>';
-  }).join('');
+  var source=filteredOrders(), sales=source.reduce(function(s,o){return s+supply(o);},0), buys=source.reduce(function(s,o){return s+buyAmt(o);},0);
+  var groups=[], by={};
+  source.forEach(function(o){var k=groupKey(o);if(!by[k]){by[k]={key:k,rows:[],main:o};groups.push(by[k]);}by[k].rows.push(o);if(isSale(o)&&(!isSale(by[k].main)||supply(o)>supply(by[k].main)))by[k].main=o;});
+  $('#qSum').innerHTML=groups.length+'건 · 매출 <b class="num">'+won(sales)+'</b> · 매입 <b class="num">'+won(buys)+'</b> · 마진 <b class="num">'+won(sales-buys)+'</b>';
+  if((S.orderCancellations||[]).length)$('#qSum').insertAdjacentHTML('beforeend',' · <button type="button" class="btn sm" onclick="lisonShowCancelled()">취소 이력 '+uniq(S.orderCancellations.map(function(x){return (x['거래처']||'')+'|'+(x['발주일']||'')+'|'+(x['제품명']||'');})).length+'건</button>');
+  var _noSale=noSaleKeys();renderNoSaleBox(source.filter(function(o){return !!_noSale[groupKey(o)];}));
+  if(!groups.length){if($('#oPager'))$('#oPager').innerHTML='';$('#oTable').innerHTML='<tbody><tr><td class="empty">조건에 맞는 발주가 없습니다.</td></tr></tbody>';$('#oCards').innerHTML='';return;}
+  var _LP=(typeof pgSlice==='function'&&PG.list)?pgSlice('list',groups):{rows:groups,pager:'',from:0};groups=_LP.rows;
+  if($('#oPager'))$('#oPager').innerHTML=_LP.pager;
+  $('#oTable').innerHTML='<thead><tr><th>발주일</th><th>업체명</th><th>제품명</th><th>수량 × 단가</th><th class="r">매출</th><th class="r">매입합계</th><th class="r">마진</th><th>출고</th><th>계산서</th><th>입금</th><th>관리</th></tr></thead><tbody>'+groups.map(function(g){var o=g.main,b=g.rows.reduce(function(v,x){return v+buyAmt(x);},0),v=g.rows.reduce(function(v,x){return v+supply(x);},0);return '<tr data-id="'+esc(o.ID)+'"><td>'+dShort(o['발주일'])+'</td><td>'+esc(o['업체명'])+'</td><td class="item"><button type="button" class="order-item-open" data-act="to-prod">'+esc(o['품목']||'(품목 없음)')+'</button><br><button type="button" class="order-ledger-link" data-act="to-ledger">원장보기 ↗</button></td><td>'+qtyText(o)+'</td><td class="r">'+won(v)+'</td><td class="r">'+won(b)+'</td><td class="r">'+won(v-b)+'</td><td>'+chipShip(o)+'</td><td>'+chipInv(o)+'</td><td>'+chipPaid(o)+'</td><td><button type="button" class="btn sm" data-act="edit">수정</button> <button type="button" class="btn sm" data-act="more">⋯</button></td></tr>';}).join('')+'</tbody>';
+  $('#oCards').innerHTML=groups.map(function(g){var o=g.main,b=g.rows.reduce(function(v,x){return v+buyAmt(x);},0),v=g.rows.reduce(function(v,x){return v+supply(x);},0);return '<div class="card" data-id="'+esc(o.ID)+'"><div class="row"><span class="co">'+esc(o['업체명'])+'</span><span class="dt">'+dShort(o['발주일'])+'</span></div><div class="it"><button type="button" class="order-item-open" data-act="to-prod">'+esc(o['품목'])+'</button></div><div class="row"><span>매출 '+won(v)+'</span><span>매입 '+won(b)+'</span><b>마진 '+won(v-b)+'</b></div><div class="acts"><button type="button" class="order-ledger-link" data-act="to-ledger">원장보기 ↗</button><button type="button" class="btn sm" data-act="edit">수정</button><button type="button" class="btn sm" data-act="more">⋯</button></div></div>';}).join('');
 }
 ['#qText', '#qMonth', '#qState', '#qCo'].forEach(function (s) { $(s).addEventListener(s === '#qText' ? 'input' : 'change', function () { renderList(); }); });
 $('#nsBox').addEventListener('click', function (e) {
@@ -2891,6 +2893,9 @@ function openOrderPeek(o,kind){
     html+=orderPeekSection('거래처원장 요약 (현재 조회 데이터)','<div class="order-peek-grid">'+orderPeekField('매출 주문 건수',other.length+'건')+orderPeekField('매출 주문 합계',won(otherTotal)+'원')+orderPeekField('미입금 주문 건수',unpaid.length+'건')+orderPeekField('미입금 주문 합계',won(unpaid.reduce(function(sum,x){return sum+total(x);},0))+'원')+'</div><p class="order-peek-muted" style="margin-top:9px">주문 상태 기준 요약입니다. 부분 입금·이월 잔액 등이 반영된 실제 거래처원장 잔액과 다를 수 있습니다.</p>');
     html+=orderPeekSection('선택 주문의 입금 상태','<div class="order-peek-grid">'+orderPeekField('입금 확인',o['입금확인']?'입금 완료':'미입금')+orderPeekField('입금일',dShort(o['입금일']))+orderPeekField('입금액',o['입금액']!==''&&o['입금액']!=null?won(o['입금액'])+'원':'-')+orderPeekField('세금계산서',o['세금계산서']?'발행':'미발행')+'</div>');
   }
+  html+=orderPeekSection('공정별 매입 · 상세정보',lisonOrderGroupDetail(o));
+  var specs=(S.specs||[]).find(function(x){return x['업체명']===co&&x['발주일']===o['발주일']&&String(x['품목']||'').trim()===String(o['품목']||'').trim();});
+  if(specs){var sd={};try{sd=JSON.parse(specs['사양']||'{}');}catch(e){}html+=orderPeekSection('작업 사양 · 시안','<div class="order-peek-grid">'+Object.keys(sd).filter(function(k){return typeof sd[k]!=='object'&&sd[k]!=='';}).slice(0,35).map(function(k){return orderPeekField(k,sd[k]);}).join('')+orderPeekField('등록된 시안',specs['도안']?'첨부되어 있음':'미등록')+'</div>');}
   document.getElementById('orderPeekBody').innerHTML=html;
   openM('orderPeekM');
 }
@@ -2916,10 +2921,18 @@ function openMore(o) {
   preview(o['업체명'] + ' · ' + o['품목'], '', '<div class="actions" style="margin:0;flex-wrap:wrap"><button class="btn p" type="button" id="mvRe">이 주문 다시 발주 (품목 전체)</button><button class="btn" type="button" id="mvCopy">이 줄만 복사</button><button class="btn danger" type="button" id="mvDel">삭제</button></div>');
   $('#mvRe').onclick = function () { closeM('pvM'); loadReorder(groupKey(o)); };
   $('#mvCopy').onclick = function () { closeM('pvM'); editOrder(o, true); };
-  $('#mvDel').onclick = function () { closeM('pvM'); delOrder(o); };
+  $('#mvDel').textContent='발주 취소';
+  $('#mvDel').onclick = function () { closeM('pvM'); cancelOrderGroup(o); };
   var cb = document.createElement('button'); cb.type = 'button'; cb.className = 'btn'; cb.style.cssText = 'border-color:#c4302b;color:#c4302b'; cb.textContent = '불량·클레임 등록'; cb.onclick = function () { closeM('pvM'); openClaim(null, o); }; $('#mvDel').parentNode.insertBefore(cb, $('#mvDel'));
 }
 
+function cancelOrderGroup(o){
+  var reason=prompt('발주를 취소할 사유를 입력하세요.\n취소된 주문은 총정리·생산·매입 통계에서 제외되고 이력만 보존됩니다.');
+  if(reason===null)return;
+  if(String(reason).trim().length<2){toast('취소 사유를 2자 이상 입력하세요.');return;}
+  if(!confirm('이 발주와 연결된 모든 매입 줄을 취소할까요?\n출고·입금·지급·계산서 처리된 발주는 취소되지 않습니다.'))return;
+  api('cancelOrder',{id:o.ID,reason:String(reason).trim()},{wait:true}).then(function(){toast('발주가 취소되어 일반 목록에서 제외되었습니다.');renderList();}).catch(function(e){toast('발주 취소 실패: '+(e.message||e));});
+}
 function delOrder(o) {
   ask('발주 줄 삭제', dShort(o['발주일']) + ' ' + o['업체명'] + '\n' + o['품목'] + ' ' + won(supply(o)) + '원\n\n총정리 시트에서 이 줄이 삭제됩니다.', []).then(function (r) {
     if (!r) return;
@@ -3234,14 +3247,27 @@ function saveOrder(keep) {
   }
   $('#oSave').disabled = $('#oSaveNext').disabled = true;
   function done() { toast(editing ? '수정했습니다.' : '총정리에 저장했습니다.'); editBase = null; if (editing) { resetOrder(false); showTab('list'); } else resetOrder(keep); }
-  function addExtras() { if (!extras.length) return; var b0 = orderById(o.ID) || o; return api('saveOrders', { orders: extras.map(function (b) { return buyOnlyRow(b0, b); }) }); }
-  (req ? api('saveOrder', req) : Promise.resolve()).then(addExtras).then(function(){return window.orderPlateUI?window.orderPlateUI.persist(o.ID):null;}).then(done).catch(function (e) {
-    if (!e || !e.conflict) return;
-    ask('다른 곳에서 먼저 바뀐 칸이 있어요', conflictText(e.conflict) + '\n\n내 내용으로 덮어쓸까요? 취소하면 최신 내용으로 수정 화면을 다시 열어요.', []).then(function (ok) {
-      if (ok) return api('saveOrder', Object.assign({}, req, { force: true })).then(addExtras).then(done).catch(function () {});
-      var cur = orderById(o.ID); if (cur) editOrder(cur, false);
-    });
-  }).then(function () { $('#oSave').disabled = $('#oSaveNext').disabled = false; });
+  var plateRequest={choice:'unchanged'};
+  if(window.orderPlateUI&&window.orderPlateUI.isChanged()){
+    var pChoice=window.orderPlateUI.request();
+    plateRequest=pChoice.choice==='none'?{choice:'unlink'}:pChoice;
+  }
+  function submitUpdate(force){
+    var update=req?Object.assign({},req,force?{force:true}:{}):null;
+    return api('updateOrderAtomic',{orderId:o.ID,update:update,extraBuys:extras,plate:plateRequest});
+  }
+  submitUpdate(false).then(function(result){
+    if(!result||!result.committed||String(result.updatedId)!==String(o.ID))throw new Error('발주 저장 확인 응답이 올바르지 않습니다.');
+    done();
+  }).catch(function(e){
+    if(e&&e.conflict){
+      return ask('다른 곳에서 먼저 바뀐 칸이 있어요', conflictText(e.conflict)+'\n\n내 내용으로 덮어쓸까요?',[]).then(function(ok){
+        if(ok)return submitUpdate(true).then(function(r){if(!r||!r.committed)throw new Error('저장 완료 확인 실패');done();});
+        var cur=orderById(o.ID);if(cur)editOrder(cur,false);
+      }).catch(function(err){toast('수정 저장 실패: '+(err.message||err));});
+    }
+    toast('수정 저장 실패: '+(e.message||e));
+  }).then(function(){$('#oSave').disabled=$('#oSaveNext').disabled=false;});
 }
 function saveNew() {
   var cur = collectOrder(), lines = cart.slice();
@@ -3250,25 +3276,19 @@ function saveNew() {
   if (!fv('업체명').value.trim()) { toast('업체명을 입력하세요.'); fv('업체명').focus(); return; }
   if (!lines.length) { toast('품목을 입력하세요.'); fv('품목').focus(); return; }
   lines = expandBuys(lines.map(function (o) { return applyHeader(o); }));
+  var abnormal=lines.filter(function(x){return n(x['매입금액'])>=10000000|| (n(x['매입금액'])>n(x['금액'])*5&&n(x['매입금액'])>3000000&&n(x['금액'])>0);});
+  if(abnormal.length&&!confirm('비정상적으로 큰 매입금액이 있습니다.\n'+abnormal.map(function(x){return (x['매입처']||'매입처 미지정')+': '+won(x['매입금액'])+'원';}).join('\n')+'\n수량·단가 단위가 맞는지 확인하셨습니까?'))return;
   var head = { co: lines[0]['업체명'], order: lines[0]['발주일'] };
   $('#oSave').disabled = $('#oSaveNext').disabled = true;
-  var p = lines.length === 1 ? api('saveOrder', { order: lines[0] }) : api('saveOrders', { orders: lines });
-  p.then(function (result) {
-    var ids=(result&&result.ids)||((result&&result.id)?[result.id]:[]);
-    if(window.orderPlateUI&&window.orderPlateUI.chosen()){
-      if(document.getElementById('orderPlateChoice').value==='new'){
-        var requests=lines.map(function(line,i){return {line:line,id:ids[i]};}).filter(function(x){return x.id&&x.line['품목']&&(+String(x.line['금액']||'').replace(/,/g,'')>0||+String(x.line['수량']||'').replace(/,/g,'')>0);});
-        if(!requests.length&&ids.length)requests=[{id:ids[0]}];
-        if(!requests.length)throw new Error('주문 ID를 받지 못해 신규 동판을 등록하지 않았습니다.');
-        return Promise.all(requests.map(function(x){return window.orderPlateUI.persist(x.id);})).then(function(){return result;});
-      }
-      var pos=lines.findIndex(function(x){return x['품목']===cur['품목']&&x['매입처']===cur['매입처'];});
-      return window.orderPlateUI.persist(ids[Math.max(0,pos)]||ids[0]).then(function(){return result;});
-    }
+  var plateRequest=window.orderPlateUI&&window.orderPlateUI.request?window.orderPlateUI.request():{choice:'none',link:null};
+  var importSpec=lisonPendingWork&&lisonPendingWork.co===head.co&&lisonPendingWork.order===head.order?lisonPendingWork:null;
+  var p=api('commitOrder',{orders:lines,plate:plateRequest,workSpec:importSpec});
+  p.then(function(result){
+    if(!result||!result.ids||result.ids.length!==lines.length)throw new Error('주문 저장 결과의 행 수가 일치하지 않습니다.');
     return result;
   }).then(function () {
-    toast(lines.length > 1 ? '총정리에 ' + lines.length + '줄 저장했어요.' : '총정리에 저장했습니다.');
-    cart = []; cartEdit = -1; resetOrder(false);
+    alert('발주 등록 완료\n거래처: '+head.co+'\n발주일: '+head.order+'\n저장된 품목·매입 줄: '+lines.length+'개\n서버 저장이 완료되었습니다.');
+    cart = []; cartEdit = -1; lisonPendingWork=null; resetOrder(false);
     if (typeof afterNewOrder === 'function') afterNewOrder(head);
   }).catch(function (e) {toast('주문 또는 동판 연결 확인 필요: '+(e.message||e));}).then(function () { $('#oSave').disabled = $('#oSaveNext').disabled = false; });
 }
@@ -4191,6 +4211,7 @@ function prodGroupsCalc(raw) {
     else if (g.si === 4 && g.posts.length) { var pi = -1; g.posts.some(function (p, x) { if (!p['완료일']) { pi = x; return true; } return false; }); g.next = { label: g.posts[pi]['공정'] + ' 완료', act: 'post', idx: pi }; }
     else g.next = { label: STAGES[g.si] + ' 완료', act: 'step', idx: g.si };
   });
+  list.sort(function(a,b){return String(b.order||'').localeCompare(String(a.order||'')) || (Number(b.main&&b.main._row||0)-Number(a.main&&a.main._row||0));});
   return list;
 }
 function ddayBadge(g) {
@@ -4900,9 +4921,12 @@ function woFileName(g, fac, client, ext) {
 }
 function woRows(g) {
   // 공정표: 동판 → 원단 입고 → 인쇄 → 후가공(각각) → 출고
-  var filmFac = g.sc['원단 발주처'] || '', printFac = g.sc['인쇄 공장'] || g.buyers[0] || '';
+  var filmFac = g.sc['원단 발주처'] || '', printFac = g.sc['인쇄 공장'] || '';
+  var specRow=(S.specs||[]).find(function(x){return x['업체명']===g.co&&x['발주일']===g.order&&String(x['품목']||'').trim()===String(g.pk||'').trim();});
+  if(!printFac&&specRow){try{var sp=JSON.parse(specRow['사양']||'{}');printFac=(sp.인쇄&&sp.인쇄.업체)||sp['인쇄업체']||sp['인쇄소']||sp['인쇄공장']||sp.printFactory||'';}catch(e){}}
+  if(!printFac){var printing=g.rows.filter(function(x){return /인쇄|프린팅|인쇄비|[0-9]+도/.test(String(x['규격']||'')+' '+String(x['비고']||''));});var facs=printing.map(function(x){return x['매입처'];}).filter(Boolean);if(facs.length&&facs.every(function(x){return x===facs[0];}))printFac=facs[0];}
   var rows = [
-    { name: '동판', fac: printFac, plan: g.steps[1].plan, done: g.steps[1].done, memo: '' },
+    { name: '동판', fac: ((S.plates||[]).find(function(p){return g.rows.some(function(o){return String(p['주문ID']||'')===String(o.ID||'');});})||{})['동판업체']||'', plan: g.steps[1].plan, done: g.steps[1].done, memo: '' },
     { name: '원단 입고', fac: filmFac, plan: g.steps[2].plan, done: g.steps[2].done, memo: '' },
     { name: '인쇄', fac: printFac, plan: g.steps[3].plan, done: g.steps[3].done, memo: '' }
   ];
@@ -10309,32 +10333,34 @@ function wiSchedFor(g, s) {
   if (changed) Object.assign(f, postsWithAgg(posts));
   return { f: f, posts: changed ? posts : null };
 }
-$('#wiGo').addEventListener('click', function () {
-  var todo = wiDocs.filter(function (d) { return d.on !== false; });
-  var bad = todo.filter(function (d) { return !d.co || !d.order; })[0];
-  if (bad) return toast((bad.spec.제품명 || bad.file) + ': 거래처와 발주일을 정해주세요.');
-  var btn = this; busy(btn, true);
-  var ok = 0;
-  todo.reduce(function (p, d) {
-    return p.then(function () {
-      var s = wiFullSpec(d), key = d.link || (d.co + '|' + d.order + '|' + (s.제품명 || '작업의뢰서 품목'));
-      var make = d.link ? Promise.resolve() : api('saveOrder', { order: { '발주일': d.order, '업체명': d.co, '품목': s.제품명 || '작업의뢰서 품목', '스펙': s.제품규격 || '', '수량': n(s.발주량) || '', '단가': d.price ? n(d.price) : '', '금액': d.price && n(s.발주량) ? Math.round(n(s.발주량) * n(d.price)) : '', '매입처': s.인쇄.업체 || '', '비고': '작업의뢰서 엑셀' } }, { wait: true });
-      return make.then(function () {
-        var parts = key.split('|'), req = { co: parts[0], order: parts[1], item: parts.slice(2).join('|'), spec: JSON.stringify(cleanSpec(s)) };
-        if (d.img) req.image = { b64: d.img.split(',')[1], mime: 'image/jpeg', name: '도안.jpg' };
-        return api('saveSpec', req, { wait: true }).then(function (r) { if (d.img && r && r.image) IMG[r.image] = d.img; return req; });
-      }).then(function (req) {
-        var g = prodGroups(false).filter(function (x) { return x.key === req.co + '|' + req.order + '|' + req.item; })[0];
-        if (!g) return;
-        var z = wiSchedFor(g, s);
-        if (Object.keys(z.f).length || z.posts) return saveSched(g, z.f, z.posts, '');
-      }).then(function () { ok++; });
-    });
-  }, Promise.resolve()).then(function () {
-    busy(btn, false); closeM('wiM');
-    toast('작업의뢰서 ' + ok + '건을 연결했어요. 생산 일정과 작업 사양에 들어갔어요.');
-    showTab('prod');
-  }).catch(function (e) { busy(btn, false); toast('연결하다 멈췄어요: ' + (e && e.message || '')); });
+/* 업로드는 임시 미리채우기만 수행. 사용자가 발주 저장을 눌러야 확정된다. */
+var lisonPendingWork=null;
+function lisonWorkPurchases(sp){
+  var out=[];
+  (sp.원단||[]).forEach(function(m){if(!m.발주처&&!m.재질)return;out.push({'매입처':m.발주처||'','규격':(m.구분||'원단')+' '+(m.재질||'')+(m.두께||'')+' '+(m.폭||'')+'×'+(m.길이||'')+' / '+(m.수량||'')+(m.단위||'롤')+(m.입고일?' · 입고 '+m.입고일:''),'매입수량':'','매입단가':'','매입금액':''});});
+  var pr=sp.인쇄||{};
+  if(pr.업체||pr.도수)out.push({'매입처':pr.업체||'','규격':'인쇄 '+(pr.도수||'')+' / 동판 '+(pr.동판규격||'')+' / '+(pr.인쇄방향||'')+(Array.isArray(pr.색상)?' / '+pr.색상.filter(function(x){return x&&x!=='8';}).join('·'):''),'매입수량':'','매입단가':'','매입금액':''});
+  (sp.합지&&sp.합지.행||[]).forEach(function(m,i){if(!m.업체&&!m.방식)return;out.push({'매입처':m.업체||sp.합지.업체||'','규격':'합지 '+(m.순서||((i+1)+'차'))+' '+(m.방식||'')+' / '+(m.방향||''),'매입수량':'','매입단가':'','매입금액':''});});
+  var sl=sp.슬리터||{};if(sl.업체||sl.폭)out.push({'매입처':sl.업체||'','규격':'슬리터 '+(sl.폭||'')+(sl.폭단위||'mm')+' × '+(sl.길이||'')+(sl.길이단위||'m')+' / '+(sl.수량||'')+(sl.단위||'롤')+' · 방향 '+(sl.방향||'')+' / '+(sl.비고||''),'매입수량':'','매입단가':'','매입금액':''});
+  return out;
+}
+$('#wiGo').addEventListener('click',function(){
+  var selected=wiDocs.filter(function(d){return d.on!==false;});
+  if(!selected.length)return toast('작업의뢰서를 선택하세요.');
+  if(selected.length!==1)return toast('발주 누락 방지를 위해 의뢰서를 한 건씩 확인·저장해 주세요.');
+  var d=selected[0],spec=wiFullSpec(d);
+  if(!d.co||!d.order||!spec.제품명)return toast('거래처·발주일·제품명을 모두 확인하세요.');
+  if(d.link){
+    var p=d.link.split('|');if(!confirm('기존 발주에 작업 사양을 갱신할까요? 주문 매입금액은 변경하지 않습니다.'))return;
+    var req={co:p[0],order:p[1],item:p.slice(2).join('|'),spec:JSON.stringify(cleanSpec(spec))};
+    if(d.img)req.image={b64:d.img.split(',')[1],mime:'image/jpeg',name:'도안.jpg'};
+    var btn=this;busy(btn,true);api('saveSpec',req,{wait:true}).then(function(){closeM('wiM');toast('기존 발주의 작업 사양을 갱신했습니다.');}).catch(function(e){toast('작업 사양 저장 실패: '+(e.message||e));}).then(function(){busy(btn,false);});return;
+  }
+  closeM('wiM');resetOrder(false);showTab('entry');
+  fv('발주일').value=d.order;fv('업체명').value=d.co;fv('품목').value=spec.제품명;fv('스펙').value=spec.제품규격||'';fv('수량').value=spec.발주량||'';fv('단가').value=d.price||'';fv('금액').value=d.price&&spec.발주량?Math.round(Number(d.price)*Number(spec.발주량)):'';
+  var bs=lisonWorkPurchases(spec),first=bs.shift()||{};['매입처','규격','매입수량','매입단가','매입금액'].forEach(function(k){fv(k).value=first[k]||'';});setBuys(bs);
+  lisonPendingWork={co:d.co,order:d.order,item:spec.제품명,spec:JSON.stringify(cleanSpec(spec)),image:d.img?{b64:d.img.split(',')[1],mime:'image/jpeg',name:'도안.jpg'}:null};
+  updateCalc();toast('작업의뢰서를 발주 입력칸에 채웠습니다. 매출·매입금액 확인 후 [발주 저장]을 눌러야 등록됩니다.');
 });
 document.addEventListener('click', function (e) { if (e.target.closest('[data-wiopen]')) openWi(); });
 
@@ -11672,7 +11698,7 @@ document.addEventListener('input',function(ev){if(ev.target.id!=='plateCandidate
  function linked(){var id=document.getElementById('oForm').elements.ID.value;return (S.orderPlates||[]).find(function(x){return String(x['주문ID'])===id;});}
  function setOrder(id){selected=null;var x=(S.orderPlates||[]).find(function(p){return String(p['주문ID'])===String(id)});var v=x?(x['사용방식']==='신규 동판 제작'?'new':'existing'):'none';document.getElementById('orderPlateChoice').value=v;if(x&&v==='existing'){selected={ref:x['동판참조'],client:x['거래처명'],product:x['품명'],spec:x['규격'],where:x['보관처'],mode:x['사용방식'],saved:true};}update();}
  function payload(orderId){if(!selected)return null;return {orderId:orderId,plateRef:selected.ref,expectedClient:selected.client,expectedProduct:selected.product,expectedSpec:selected.spec,mode:document.getElementById('orderPlateMode')?.value||selected.mode};}
- window.orderPlateUI={setOrder:setOrder,chosen:function(){return choice()==='new'||(choice()==='existing'&&!!selected);},persist:function(orderId){if(!orderId)return Promise.reject(new Error('저장된 주문 ID를 확인하지 못했습니다.'));
+ window.orderPlateUI={setOrder:setOrder,chosen:function(){return choice()==='new'||(choice()==='existing'&&!!selected);},request:function(){return {choice:choice(),link:choice()==='existing'?payload(''):null};},persist:function(orderId){if(!orderId)return Promise.reject(new Error('저장된 주문 ID를 확인하지 못했습니다.'));
   if(choice()==='new')return api('createOrderPlate',{orderId:orderId},{wait:true}).then(function(r){update();return r;});
   if(choice()!=='existing')return Promise.resolve();
   var x=payload(orderId);return x?api('linkOrderPlate',x,{wait:true}).then(function(r){selected.saved=true;update();return r;}):Promise.reject(new Error('기존 동판을 선택하세요.'));
@@ -11762,4 +11788,24 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'){var p=docum
  var lastReady=false;setInterval(function(){var ready=userReady();if(ready&&!lastReady)boot();if(!ready&&lastReady){notices=[];$n('lnTopRoll').hidden=true;if(pollTimer)clearInterval(pollTimer);pollTimer=null;}$n('lnMasterBtn').hidden=!isMaster();lastReady=ready;},1000);
 })();
 </script>
-</body></html>
+<script id="lison-input-rule-20261010">
+(function(){
+  function numeric(el){
+    var k=(el.name||'')+' '+(el.id||'')+' '+(el.getAttribute('data-bxk')||'');
+    if(/전화|휴대|팩스|사업자|우편|계좌|아이디|비밀번호|비고|날짜|발주일|입금일|지급일/.test(k))return false;
+    return /수량|단가|매입금액|금액|도수|폭|두께|길이|규격번호|미터/.test(k) && !(/date|time|password/i).test(el.type);
+  }
+  document.addEventListener('focusin',function(e){var x=e.target;if(!x||x.tagName!=='INPUT')return;
+    if(numeric(x)){x.setAttribute('inputmode','decimal');return;}
+    if((x.type||'text')==='text'){x.setAttribute('lang','ko');x.setAttribute('autocomplete','off');}
+  },true);
+  document.addEventListener('input',function(e){var x=e.target;if(!x||x.tagName!=='INPUT'||!numeric(x)||x.type==='number'||x.isComposing)return;
+    var raw=x.value;
+    if(!/^[-+]?\d[\d,]*(?:\.\d*)?$/.test(raw)&&!/^[\d,.]*$/.test(raw))return;
+    var m=raw.match(/^(.*?\.)(\d{4,})$/);if(!m)return;
+    var trimmed=m[1]+m[2].slice(0,3);
+    var selection=x.selectionStart;x.value=trimmed;
+    try{x.setSelectionRange(Math.min(selection,trimmed.length),Math.min(selection,trimmed.length));}catch(ex){}
+  },true);
+})();
+</script></body></html>
