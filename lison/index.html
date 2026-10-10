@@ -263,10 +263,23 @@
 #platePhotoViewer button{background:#fff;color:#283544;border:1px solid #dce1e8}
 @media(max-width:770px){.plate-overview{grid-template-columns:1fr}.plate-overview-main{grid-template-columns:1fr}.plate-overview-note{grid-column:auto}.plate-overview-gallery{grid-template-columns:repeat(4,minmax(0,1fr))}#plateM .plate-detail-body{max-height:65vh}}
 </style>
+
+<style>
+/* 거래 품목 클릭: 기존 메뉴 위치를 변경하지 않는 읽기전용 모달 */
+.order-peek-sheet{width:min(760px,calc(100vw - 24px))!important;max-width:760px!important;max-height:86vh;overflow-y:auto;padding:0!important;border-radius:14px}
+.order-peek-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;padding:23px 26px 16px;border-bottom:1px solid var(--line,#dde2e7)}
+.order-peek-head h2{font-size:20px;margin:3px 0 7px;line-height:1.4}.order-peek-head .sub{margin:0}.order-peek-kicker{font-size:11px;letter-spacing:.03em;color:#396da4;font-weight:700}
+.order-peek-x{flex:0 0 34px;width:34px;height:34px;border:0;background:transparent;color:#525c68;font-size:27px;line-height:1;cursor:pointer;border-radius:8px}.order-peek-x:hover{background:var(--raise,#f5f6f8)}
+.order-peek-content{padding:19px 26px 26px}.order-peek-sec{margin:0 0 22px}.order-peek-sec:last-child{margin-bottom:0}.order-peek-sec>h3{font-size:13px;margin:0 0 11px;padding:0 0 8px;border-bottom:1px solid var(--line,#dde2e7);color:var(--ink,#17212b)}
+.order-peek-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 22px}.order-peek-field{min-width:0}.order-peek-field>small{display:block;font-size:11px;color:var(--muted,#6b7280);margin-bottom:5px}.order-peek-field>strong{display:block;font-size:13px;font-weight:600;overflow-wrap:anywhere;line-height:1.6}
+.order-peek-table{width:100%;border-collapse:collapse;font-size:12px}.order-peek-table th,.order-peek-table td{padding:9px 7px;border-bottom:1px solid var(--line,#dde2e7);text-align:left;vertical-align:top}.order-peek-table th{font-weight:600;color:var(--muted,#6b7280);background:var(--raise,#f7f8f9)}
+.order-peek-muted{font-size:12px;color:var(--muted,#6b7280)}.order-peek-status{display:inline-block;background:#e9f3fc;color:#245b94;padding:3px 8px;font-size:11px;font-weight:700;border-radius:999px}
+@media(max-width:560px){.order-peek-head{padding:17px}.order-peek-content{padding:16px}.order-peek-grid{grid-template-columns:1fr}.order-peek-table{font-size:11px}}
+</style>
 </head><body>
 <title>리손패키지 거래처 관리 ERP</title>
 <meta name="robots" content="noindex,nofollow">
-<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbxHq9Pjd_72CjRIRZHnEtU1HhD8tEq0XsI9naAP421P70M_rGX1YhoMJN9aP1fdOxg6/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
+<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbxrTi15gTqc4L_UvNPjar4RmOwuFwbglMb5sIywI1b_rT2-nS58pdvWHYN6mB1569Tl/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -2034,6 +2047,15 @@ function themeFromHex(hex) {
   </div>
 </div>
 
+
+<!-- 총정리·입금관리 품목별 읽기 전용 상세 팝업 -->
+<div class="modal" id="orderPeekM" hidden>
+  <div class="sheet order-peek-sheet" role="dialog" aria-modal="true" aria-labelledby="orderPeekTitle">
+    <div class="order-peek-head"><div><div class="order-peek-kicker" id="orderPeekKicker">작업 상세</div><h2 id="orderPeekTitle">주문 상세</h2><p class="sub" id="orderPeekSub"></p></div><button type="button" class="order-peek-x" data-close="orderPeekM" aria-label="닫기">×</button></div>
+    <div id="orderPeekBody" class="order-peek-content"></div>
+  </div>
+</div>
+
 <!-- 카드 명세서 가져오기 미리보기 -->
 <div class="modal" id="impM" hidden>
   <div class="sheet wide">
@@ -2829,12 +2851,40 @@ $('#nsBox').addEventListener('click', function (e) {
   if (e.target.closest('[data-nsall]')) { nsAll = !nsAll; renderList(); return; }
   if (e.target.closest('.ns-go')) setTimeout(function () { var f = $('#oForm'), u = f && f.elements['단가']; if (u) { u.focus(); u.classList.add('need'); setTimeout(function () { u.classList.remove('need'); }, 2500); } toast('빨간 매출 칸에 단가(또는 금액)를 넣고 저장하세요.'); }, 120);
 });
-function openOrderProductionDetail(o) {
-  var group=prodGroups(false).find(function(g){return g.rows&&g.rows.some(function(row){return String(row.ID)===String(o.ID);});});
-  if(!group){toast('연결된 생산관리 작업진행 상세를 찾지 못했습니다.');return;}
-  showTab('prod');
-  openProd(group);
+function orderPeekField(label,value){return '<div class="order-peek-field"><small>'+esc(label)+'</small><strong>'+esc(value===undefined||value===null||value===''?'-':String(value))+'</strong></div>';}
+function orderPeekSection(title,inner){return '<section class="order-peek-sec"><h3>'+esc(title)+'</h3>'+inner+'</section>';}
+function openOrderPeek(o,kind){
+  if(!o){toast('연결된 주문 정보를 찾을 수 없습니다.');return;}
+  var production=kind==='production', group=null;
+  if(production){group=prodGroups(false).find(function(g){return g.rows&&g.rows.some(function(row){return String(row.ID)===String(o.ID);});})||null;}
+  var title=String(o['품목']||'품목 미등록'), co=String(o['업체명']||'거래처 미등록');
+  document.getElementById('orderPeekKicker').textContent=production?'생산 작업진행 상세 · 읽기 전용':'입금관리 · 주문 및 거래처원장 정보';
+  document.getElementById('orderPeekTitle').textContent=title;
+  document.getElementById('orderPeekSub').textContent=co+' · 주문 ID '+String(o.ID||'-');
+  var info=orderPeekSection('주문 기본정보','<div class="order-peek-grid">'+[
+    orderPeekField('거래처',co),orderPeekField('발주일',dShort(o['발주일'])),
+    orderPeekField('품목',title),orderPeekField('규격 / 사양',o['스펙']||o['내용 및 Spec']||''),
+    orderPeekField('발주 수량',o['수량']),orderPeekField('매출 금액',won(total(o))+'원'),
+    orderPeekField('출고일',dShort(o['출고일'])),orderPeekField('납기일',dShort(o['납기일']))].join('')+'</div>');
+  var html=info;
+  if(production){
+    if(group){
+      html+=orderPeekSection('생산 진행현황','<div class="order-peek-grid">'+orderPeekField('현재 단계',group.stage||'미등록')+orderPeekField('납기일',dShort(group.due))+orderPeekField('출고 예정',dShort(group.shipPlan||group.shippedOn))+orderPeekField('생산 메모',group.memo||'')+'</div>');
+      var stages=(group.steps||[]).map(function(step){return '<tr><td>'+esc(step.name||'-')+'</td><td>'+esc(step.done==='생략'?'생략':dShort(step.plan)||'-')+'</td><td>'+esc(step.done==='생략'?'생략':dShort(step.done)||'-')+'</td></tr>';}).join('');
+      html+=orderPeekSection('공정별 일정','<div class="tw"><table class="order-peek-table"><thead><tr><th>공정</th><th>예정</th><th>완료</th></tr></thead><tbody>'+stages+'</tbody></table></div>');
+      if(group.confirmedPlate)html+=orderPeekSection('연결 동판','<span class="order-peek-status">기존 동판 사용 확정</span> <span class="order-peek-muted">'+esc(group.confirmedPlate['동판번호']||group.confirmedPlate['동판참조']||'')+'</span>');
+    }else html+=orderPeekSection('생산 진행현황','<p class="order-peek-muted">이 주문에 연결된 별도 생산 일정은 아직 없습니다.</p>');
+  }else{
+    var other=(S.orders||[]).filter(function(x){return String(x['업체명']||'')===co&&isSale(x);});
+    var otherTotal=other.reduce(function(sum,x){return sum+total(x);},0);
+    var unpaid=other.filter(function(x){return !x['입금확인'];});
+    html+=orderPeekSection('거래처원장 요약 (현재 조회 데이터)','<div class="order-peek-grid">'+orderPeekField('매출 주문 건수',other.length+'건')+orderPeekField('매출 주문 합계',won(otherTotal)+'원')+orderPeekField('미입금 주문 건수',unpaid.length+'건')+orderPeekField('미입금 주문 합계',won(unpaid.reduce(function(sum,x){return sum+total(x);},0))+'원')+'</div><p class="order-peek-muted" style="margin-top:9px">주문 상태 기준 요약입니다. 부분 입금·이월 잔액 등이 반영된 실제 거래처원장 잔액과 다를 수 있습니다.</p>');
+    html+=orderPeekSection('선택 주문의 입금 상태','<div class="order-peek-grid">'+orderPeekField('입금 확인',o['입금확인']?'입금 완료':'미입금')+orderPeekField('입금일',dShort(o['입금일']))+orderPeekField('입금액',o['입금액']!==''&&o['입금액']!=null?won(o['입금액'])+'원':'-')+orderPeekField('세금계산서',o['세금계산서']?'발행':'미발행')+'</div>');
+  }
+  document.getElementById('orderPeekBody').innerHTML=html;
+  openM('orderPeekM');
 }
+function openOrderProductionDetail(o) {openOrderPeek(o,'production');}
 function orderById(id) { for (var i = 0; i < S.orders.length; i++) if (S.orders[i].ID === id) return S.orders[i]; return null; }
 document.addEventListener('click', function (e) {
   var b = e.target.closest('[data-act]'); if (!b) return;
@@ -5182,23 +5232,10 @@ function updatePayBtn() {
 $('#pCo').addEventListener('change', function () { pSel = {}; renderPay(); });
 $('#pUnpaid').addEventListener('click', function(e){
   var b=e.target.closest('[data-pay-ledger]');if(!b)return;
-  // 입금처리 체크박스가 있는 label 안에서 클릭하더라도 품목은 원장 이동만 수행
   e.preventDefault();e.stopPropagation();
-  var orderId=b.getAttribute('data-pay-ledger');
-  var o=orderById(orderId);
-  if(!o){if(typeof toast==='function')toast('주문을 찾을 수 없습니다. 다시 새로고침해 주세요.');return;}
-  var co=String(o['업체명']||'').trim();
-  if(!co){if(typeof toast==='function')toast('이 주문에는 거래처명이 없습니다.');return;}
-  var ledgerCo=document.getElementById('lCo');
-  if(ledgerCo){
-    // 거래처 목록에 없더라도 사용자의 주문 정보를 기준으로 필터를 지정
-    if(ledgerCo.tagName==='SELECT'&&!Array.from(ledgerCo.options).some(function(x){return x.value===co;})){
-      var opt=document.createElement('option');opt.value=co;opt.textContent=co;ledgerCo.appendChild(opt);
-    }
-    ledgerCo.value=co;
-  }
-  showTab('ledger');
-  if(typeof renderLedger==='function')renderLedger();
+  var o=orderById(b.getAttribute('data-pay-ledger'));
+  if(!o){toast('주문을 찾을 수 없습니다. 다시 새로고침해 주세요.');return;}
+  openOrderPeek(o,'ledger');
 },true);
 $('#pUnpaid').addEventListener('change', function (e) { var id = e.target.getAttribute('data-pid'); if (id) { pSel[id] = e.target.checked; updatePayBtn(); } });
 $('#pApply').addEventListener('click', function () {
@@ -11514,34 +11551,45 @@ document.addEventListener('input',function(ev){if(ev.target.id!=='plateCandidate
 </script>
 <div class="modal" id="orderPlateLookup" hidden><div class="mbg" data-orderplate-close></div><div class="sheet orderplate-modal" role="dialog" aria-modal="true" aria-labelledby="orderPlateLookupTitle">
 <div class="mh"><h2 id="orderPlateLookupTitle">기존 동판 찾아 연결하기</h2><button type="button" class="btn" data-orderplate-close aria-label="닫기">×</button></div>
-<div style="padding:15px 20px"><p class="sub">현재 발주 거래처의 동판만 표시됩니다. 품명·규격·D번호를 검색하세요.</p><input class="inp" id="orderPlateQuery" type="search" placeholder="품명, 규격, 동판 NO 검색" style="width:100%;margin:9px 0"><div id="orderPlateMatches" class="orderplate-matches"></div></div>
+<div style="padding:15px 20px"><p class="sub">거래처 관리의 업체명과 연결된 원본·개별 동판을 표시합니다. 표기가 다른 원본은 마스터가 명시적으로 연결할 수 있습니다.</p><label id="orderPlateMasterTools" style="display:none;font-size:12px;color:#345;margin:8px 0"><input type="checkbox" id="orderPlateShowUnmatched"> 연결되지 않은 다른 거래처의 원본도 보기 (마스터 전용)</label><input class="inp" id="orderPlateQuery" type="search" placeholder="품명, 규격, 동판 NO 검색" style="width:100%;margin:9px 0"><div id="orderPlateMatches" class="orderplate-matches"></div></div>
 </div></div>
 <script id="orderplate-link-script">
 (function(){
- var selected=null;
+ var selected=null, aliases={}, allSources=false;
  var modes=['기존판 재사용 검토','공용 색판 일부 활용','기존판 사용 확정'];
  function esc0(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
- function clientKey(s){return String(s||'').replace(/\s/g,'');}
+ function clientKey(s){return String(s||'').toLowerCase().replace(/주식회사|㈜|\(주\)|（주）/g,'').replace(/[\s\-_.·(),（）]/g,'');}
+ function sameClient(source,target){var a=clientKey(source),b=clientKey(target);return !!a&&!!b&&(a===b||clientKey(aliases[a])===b);}
+ function isMaster(){return typeof ME!=='undefined'&&ME&&ME.master;}
+ function fetchAliases(){return api('getPlateClientAliases',{}, {wait:true,quiet:true}).then(function(r){aliases=r.aliases||{};}).catch(function(){aliases={};});}
  function candidates(){var co=clientKey(document.getElementById('o_업체명').value),rows=[];
-  (S.legacyPlates&&S.legacyPlates.length?S.legacyPlates:(typeof plateOriginalRows==='function'?plateOriginalRows():[])).forEach(function(p,i){if(co&&clientKey(p['거래처명'])===co)rows.push({ref:'D'+(i+1),type:'원본',p:p});});
-  (S.plates||[]).forEach(function(p){if(co&&clientKey(p['거래처명'])===co&&p.ID)rows.push({ref:p.ID,type:'개별판',p:p});});
+  (S.legacyPlates&&S.legacyPlates.length?S.legacyPlates:(typeof plateOriginalRows==='function'?plateOriginalRows():[])).forEach(function(p,i){var matched=!!co&&sameClient(p['거래처명'],document.getElementById('o_업체명').value);if(matched||(allSources&&isMaster()))rows.push({ref:typeof plateOriginNo==='function'?plateOriginNo(p,i):'D'+(i+1),type:'원본',p:p,unmatched:!matched});});
+  (S.plates||[]).forEach(function(p){var matched=!!co&&sameClient(p['거래처명'],document.getElementById('o_업체명').value);if(matched&&p.ID)rows.push({ref:p.ID,type:'개별판',p:p,unmatched:false});});
   return rows;
  }
  function renderCandidates(){var el=document.getElementById('orderPlateMatches'),q=document.getElementById('orderPlateQuery').value.trim().toLowerCase();
   var a=candidates().filter(function(x){return [x.ref,x.p['품명'],x.p['규격'],x.p['원본도수'],x.p['도수']].join(' ').toLowerCase().includes(q);});
-  el.innerHTML=a.length?a.map(function(x){return '<button type="button" class="orderplate-hit" data-orderplate-ref="'+esc0(x.ref)+'"><span><b>'+esc0(x.ref)+' · '+esc0(x.p['품명'])+'</b><small>규격 '+esc0(x.p['규격']||'-')+' · 도수 '+esc0(x.p['원본도수']||x.p['도수']||'-')+' · 보관처 '+esc0(x.p['보관처']||'-')+'</small></span><span style="font-size:11px;color:#1d4e89">선택 →</span></button>';}).join(''):'<div class="orderplate-note">일치하는 동판이 없습니다. 거래처명을 확인하거나 동판관리에서 먼저 등록해 주세요.</div>';
+  el.innerHTML=a.length?a.map(function(x){return '<button type="button" class="orderplate-hit" data-orderplate-ref="'+esc0(x.ref)+'"><span><b>'+esc0(x.ref)+' · '+esc0(x.p['품명'])+'</b><small>원본 거래처 '+esc0(x.p['거래처명']||'-')+' · 규격 '+esc0(x.p['규격']||'-')+' · 도수 '+esc0(x.p['원본도수']||x.p['도수']||'-')+' · 보관처 '+esc0(x.p['보관처']||'-')+'</small></span><span style="font-size:11px;color:'+(x.unmatched?'#b34848':'#1d4e89')+'">'+(x.unmatched?'연결 확인 →':'선택 →')+'</span></button>';}).join(''):'<div class="orderplate-note">연결된 동판이 없습니다. 마스터 관리자는 다른 원본 동판을 검색해 거래처를 연결할 수 있습니다.</div>';
  }
  function update(){var el=document.getElementById('orderPlateResult'),s=document.getElementById('orderPlateStatus');document.getElementById('orderPlateClearBtn').hidden=!selected;
   if(!selected){el.hidden=true;s.textContent='미연결 · 신규 제작 여부 확인';return;}
   el.hidden=false;s.textContent=selected.saved?'데이터 연동 완료':'저장할 동판 선택됨';
   el.innerHTML='<b>'+esc0(selected.ref)+' · '+esc0(selected.product)+'</b><br>규격 '+esc0(selected.spec||'-')+' · 보관처 '+esc0(selected.where||'-')+'<br><label>사용 방식 <select class="inp" id="orderPlateMode" style="width:auto;max-width:100%;display:inline-block;margin-left:7px">'+modes.map(function(m){return '<option'+(selected.mode===m?' selected':'')+'>'+m+'</option>';}).join('')+'</select></label>';
  }
- function choose(ref){var c=candidates().find(function(x){return x.ref===ref});if(!c)return;selected={ref:c.ref,client:c.p['거래처명'],product:c.p['품명'],spec:c.p['규격']||'',where:c.p['보관처']||'',mode:'기존판 재사용 검토',saved:false};document.getElementById('orderPlateLookup').hidden=true;update();}
+ function choose(ref){var c=candidates().find(function(x){return x.ref===ref});if(!c)return;
+  function finish(){selected={ref:c.ref,client:c.p['거래처명'],product:c.p['품명'],spec:c.p['규격']||'',where:c.p['보관처']||'',mode:'기존판 재사용 검토',saved:false};document.getElementById('orderPlateLookup').hidden=true;update();}
+  if(!c.unmatched){finish();return;}
+  if(!isMaster()){toast('마스터 관리자만 거래처 연결을 확정할 수 있습니다.');return;}
+  var source=String(c.p['거래처명']||''),target=document.getElementById('o_업체명').value.trim();
+  if(!confirm('거래처 연결 확인\n\n원본 동판 거래처: '+source+'\n발주·거래처 관리 업체: '+target+'\n\n두 이름이 실제 동일 거래처임을 확인하셨습니까?\n확인 시 해당 원본 거래처의 동판이 이 업체에 연결됩니다.'))return;
+  api('mapPlateClientAlias',{source:source,target:target},{wait:true}).then(function(r){aliases=r.aliases||{};allSources=false;document.getElementById('orderPlateShowUnmatched').checked=false;finish();toast('거래처 연결정보가 저장되었습니다.');}).catch(function(e){toast('거래처 연결 실패: '+(e.message||e));});
+ }
  function linked(){var id=document.getElementById('oForm').elements.ID.value;return (S.orderPlates||[]).find(function(x){return String(x['주문ID'])===id;});}
  function setOrder(id){selected=null;var x=(S.orderPlates||[]).find(function(p){return String(p['주문ID'])===String(id)});if(x){selected={ref:x['동판참조'],client:x['거래처명'],product:x['품명'],spec:x['규격'],where:x['보관처'],mode:x['사용방식'],saved:true};}update();}
  function payload(orderId){if(!selected)return null;return {orderId:orderId,plateRef:selected.ref,expectedClient:selected.client,expectedProduct:selected.product,expectedSpec:selected.spec,mode:document.getElementById('orderPlateMode')?.value||selected.mode};}
  window.orderPlateUI={setOrder:setOrder,chosen:function(){return !!selected;},persist:function(orderId){var x=payload(orderId);return x?api('linkOrderPlate',x,{wait:true}).then(function(r){selected.saved=true;update();return r;}):Promise.resolve();},isChanged:function(){var old=linked();if(!selected)return false;return !old||String(old['동판참조'])!==selected.ref||String(old['사용방식'])!==(document.getElementById('orderPlateMode')?.value||selected.mode);},clear:function(){selected=null;update();}};
- document.getElementById('orderPlateSearchBtn').addEventListener('click',function(){if(!document.getElementById('o_업체명').value.trim()){toast('거래처명을 먼저 입력하세요.');return;}document.getElementById('orderPlateLookup').hidden=false;document.getElementById('orderPlateQuery').value='';renderCandidates();document.getElementById('orderPlateQuery').focus();});
+ document.getElementById('orderPlateSearchBtn').addEventListener('click',function(){if(!document.getElementById('o_업체명').value.trim()){toast('거래처명을 먼저 입력하세요.');return;}document.getElementById('orderPlateLookup').hidden=false;document.getElementById('orderPlateQuery').value='';allSources=false;document.getElementById('orderPlateShowUnmatched').checked=false;document.getElementById('orderPlateMasterTools').style.display=isMaster()?'block':'none';document.getElementById('orderPlateMatches').innerHTML='<p class="sub">원본 동판 연결정보를 불러오는 중...</p>';fetchAliases().then(function(){renderCandidates();document.getElementById('orderPlateQuery').focus();});});
+ document.getElementById('orderPlateShowUnmatched').addEventListener('change',function(){allSources=isMaster()&&this.checked;renderCandidates();});
  document.getElementById('orderPlateQuery').addEventListener('input',renderCandidates);
  document.getElementById('orderPlateMatches').addEventListener('click',function(e){var b=e.target.closest('[data-orderplate-ref]');if(b)choose(b.dataset.orderplateRef);});
  document.querySelectorAll('[data-orderplate-close]').forEach(function(x){x.addEventListener('click',function(){document.getElementById('orderPlateLookup').hidden=true;});});
@@ -11600,7 +11648,8 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'){var p=docum
  function isLogin(){return !!(typeof ME!=='undefined'&&ME&&!$n('loginV').hidden);}
  function userReady(){return !!(typeof ME!=='undefined'&&ME&&$n('loginV').hidden);}
  function nowKst(){return new Date(Date.now()+9*3600000).toISOString().slice(0,16);}
- function eligible(n){if(n.enabled!==true)return false;var now=nowKst();return (!n.start||n.start<=now)&&(!n.end||n.end>=now);}
+ function normalizeNoticeTime(v){var x=String(v||'').trim();if(!x)return '';var m=x.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})[ T](\d{1,2}):(\d{2})/);if(!m)return x;return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0')+'T'+m[4].padStart(2,'0')+':'+m[5];}
+ function eligible(n){if(n.enabled!==true)return false;var now=nowKst(),start=normalizeNoticeTime(n.start),end=normalizeNoticeTime(n.end);return (!start||start<=now)&&(!end||end>=now);}
  function safeImg(n){return /^data:image\/(jpeg|png|webp);base64,[a-zA-Z0-9+/=]+$/.test(n.imageData||'')?n.imageData:'';}
  // 이미지 로딩은 카드가 열릴 때만 서버에서 가져옵니다.
  function fileImg(n,elm){if(!n.imageId||!elm)return; post('noticeImage',{id:n.imageId}).then(function(d){if(d.image&&elm.isConnected)elm.src=d.image;}).catch(function(){});}
@@ -11614,8 +11663,8 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'){var p=docum
  function close(){ $n('lnLayer').hidden=true;active=null;}
  function openNotice(n){if(!n)return;active=n;var im=n.imageId?'<img class="ln-reader-image" id="lnReadImg" alt="첨부 이미지"/>':'';openWindow(n.title,'<div class="ln-status">'+xe(n.created)+' · '+(n.pinned?'중요 공지':'직원 공지')+'</div>'+(n.popup==='image'?im+'<div class="ln-text">'+xe(n.body)+'</div>':'<div class="ln-text">'+xe(n.body)+'</div>'+im)+'<div class="ln-actions"><button class="ln-btn" type="button" id="lnBack">목록 보기</button></div>');fileImg(n,$n('lnReadImg'));}
  function openBoard(){active=null;var list=visible();openWindow('직원 공지사항','<div class="ln-status">공지사항은 마스터 관리자가 작성하며 직원 계정은 읽기만 가능합니다.</div>'+(list.length?list.map(function(n){return '<button class="ln-board-row" data-ln-id="'+xe(n.id)+'"><span class="ln-notice-tag">'+(n.pinned?'중요':'공지')+'</span><span class="ln-label">'+xe(n.title)+'</span><span class="ln-date">'+xe(n.created.slice(0,10))+'</span></button>';}).join(''):'<div class="ln-empty">게시된 공지가 없습니다.</div>'));}
- function newEditor(n){if(!isMaster())return;var edit=n||{},isNew=!edit.id;active=edit;openWindow(isNew?'직원공지 등록':'직원공지 수정','<form id="lnForm"><div class="ln-row"><label class="ln-field">제목<input name="title" maxlength="120" required value="'+xe(edit.title||'')+'"></label><label class="ln-field">팝업 형식<select name="popup"><option value="none">팝업 없음</option><option value="board"'+(edit.popup==='board'?' selected':'')+'>게시판형 팝업</option><option value="image"'+(edit.popup==='image'?' selected':'')+'>이미지형 팝업</option></select></label></div><label class="ln-field">공지 본문<textarea name="body" maxlength="8000">'+xe(edit.body||'')+'</textarea></label><div class="ln-row"><label class="ln-field">게시 시작 (한국시간)<input name="start" type="datetime-local" value="'+xe(edit.start||'')+'"></label><label class="ln-field">게시 종료 (한국시간)<input name="end" type="datetime-local" value="'+xe(edit.end||'')+'"></label><label class="ln-field">팝업 노출 시작 (게시 시작과 동일하게 적용)<span class="ln-note">예약 시간이 되면 로그인·동기화 시 팝업이 표시됩니다.</span></label><label class="ln-field">이미지 선택 (PNG/JPG/WEBP, 최대 2MB)<input type="file" id="lnImageInput" accept="image/png,image/jpeg,image/webp"><span class="ln-note" id="lnImgStatus">'+(edit.imageId?'현재 등록된 이미지 있음':'등록된 이미지 없음')+'</span></label></div><div class="ln-toolbar"><label><input type="checkbox" name="enabled" '+(isNew||edit.enabled?'checked':'')+'> 게시 활성화</label><label><input type="checkbox" name="pinned" '+(edit.pinned?'checked':'')+'> 상단 고정</label><span class="ln-note">예약 날짜가 지나면 자동 노출합니다.</span></div><div class="ln-actions"><button class="ln-btn" type="button" id="lnCancel">취소</button><button class="ln-btn primary" type="submit" id="lnSave">저장하기</button></div></form>');$n('lnForm').addEventListener('submit',function(e){e.preventDefault();var f=e.currentTarget,values={id:edit.id||'',title:f.elements.title.value.trim(),body:f.elements.body.value.trim(),popup:f.elements.popup.value,start:f.elements.start.value,end:f.elements.end.value,enabled:f.elements.enabled.checked,pinned:f.elements.pinned.checked};if(!values.title)return; if(values.start&&values.end&&values.start>values.end){alert('종료 시각이 시작 시각보다 빠릅니다.');return;}var button=$n('lnSave');button.disabled=true;button.textContent='저장 중…';post('noticeSave',{notice:values}).then(getAll).then(openAdmin).catch(function(err){alert('공지 저장 실패: '+err.message);button.disabled=false;button.textContent='저장하기';});});$n('lnImageInput').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;if(!/^image\/(png|jpeg|webp)$/.test(f.type)||f.size>2097152){alert('PNG/JPG/WEBP 2MB 이하 이미지만 가능합니다.');e.target.value='';return;}if(!edit.id){alert('공지 글을 먼저 저장한 뒤 이미지 파일을 올려주세요.');return;}var r=new FileReader();r.onload=function(){var b=String(r.result).split(',')[1];$n('lnImgStatus').textContent='이미지 업로드 중…';post('noticeImageSave',{noticeId:edit.id,mime:f.type,b64:b}).then(function(){return getAll();}).then(function(){var newer=notices.find(function(x){return x.id===edit.id;});newEditor(newer);}).catch(function(err){alert(err.message);$n('lnImgStatus').textContent='이미지 업로드 실패';});};r.readAsDataURL(f);});}
- function openAdmin(){if(!isMaster())return;active=null;masterMode=true;openWindow('마스터 관리자 · 직원공지','<div class="ln-toolbar"><button class="ln-btn primary" id="lnCreate">＋ 새 공지 등록</button><span class="ln-note">공지·게시 예약·팝업·이미지를 관리합니다.</span></div><div id="lnAdminRows">'+(notices.length?notices.map(function(n){return '<div class="ln-board-row"><span class="ln-label"><b>'+xe(n.title)+'</b><small style="display:block;color:#7a8391">'+(n.enabled?'게시중/예약':'비공개')+' · '+xe(n.start||'즉시')+' ~ '+xe(n.end||'무기한')+'</small></span><button class="ln-btn" data-ln-edit="'+xe(n.id)+'">수정</button><button class="ln-btn danger" data-ln-delete="'+xe(n.id)+'">삭제</button></div>';}).join(''):'<div class="ln-empty">공지사항이 없습니다.</div>')+'</div>');}
+ function newEditor(n){if(!isMaster())return;var edit=n||{},isNew=!edit.id;active=edit;openWindow(isNew?'직원공지 등록':'직원공지 수정','<form id="lnForm"><div class="ln-row"><label class="ln-field">제목<input name="title" maxlength="120" required value="'+xe(edit.title||'')+'"></label><label class="ln-field">팝업 형식<select name="popup"><option value="none">팝업 없음 (상단·대시보드만)</option><option value="board"'+(edit.popup==='board'?' selected':'')+'>게시판형 팝업</option><option value="image"'+(edit.popup==='image'?' selected':'')+'>이미지형 팝업</option></select></label></div><label class="ln-field">공지 본문<textarea name="body" maxlength="8000">'+xe(edit.body||'')+'</textarea></label><div class="ln-row"><label class="ln-field">게시 시작 (한국시간)<input name="start" type="datetime-local" value="'+xe(normalizeNoticeTime(edit.start))+'"></label><label class="ln-field">게시 종료 (한국시간)<input name="end" type="datetime-local" value="'+xe(normalizeNoticeTime(edit.end))+'"></label><label class="ln-field">팝업 노출 시작 (게시 시작과 동일하게 적용)<span class="ln-note">예약 시간이 되면 로그인·동기화 시 팝업이 표시됩니다.</span></label><label class="ln-field">이미지 선택 (PNG/JPG/WEBP, 최대 2MB)<input type="file" id="lnImageInput" accept="image/png,image/jpeg,image/webp"><span class="ln-note" id="lnImgStatus">'+(edit.imageId?'현재 등록된 이미지 있음':'등록된 이미지 없음')+'</span></label></div><div class="ln-toolbar"><label><input type="checkbox" name="enabled" '+(isNew||edit.enabled?'checked':'')+'> 게시 활성화</label><label><input type="checkbox" name="pinned" '+(edit.pinned?'checked':'')+'> 상단 고정</label><span class="ln-note">예약 날짜가 지나면 자동 노출합니다.</span></div><div class="ln-actions"><button class="ln-btn" type="button" id="lnCancel">취소</button><button class="ln-btn primary" type="submit" id="lnSave">저장하기</button></div></form>');$n('lnForm').addEventListener('submit',function(e){e.preventDefault();var f=e.currentTarget,values={id:edit.id||'',title:f.elements.title.value.trim(),body:f.elements.body.value.trim(),popup:f.elements.popup.value,start:f.elements.start.value,end:f.elements.end.value,enabled:f.elements.enabled.checked,pinned:f.elements.pinned.checked};if(!values.title)return; if(values.start&&values.end&&values.start>values.end){alert('종료 시각이 시작 시각보다 빠릅니다.');return;}var button=$n('lnSave');button.disabled=true;button.textContent='저장 중…';post('noticeSave',{notice:values}).then(getAll).then(openAdmin).catch(function(err){alert('공지 저장 실패: '+err.message);button.disabled=false;button.textContent='저장하기';});});$n('lnImageInput').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;if(!/^image\/(png|jpeg|webp)$/.test(f.type)||f.size>2097152){alert('PNG/JPG/WEBP 2MB 이하 이미지만 가능합니다.');e.target.value='';return;}if(!edit.id){alert('공지 글을 먼저 저장한 뒤 이미지 파일을 올려주세요.');return;}var r=new FileReader();r.onload=function(){var b=String(r.result).split(',')[1];$n('lnImgStatus').textContent='이미지 업로드 중…';post('noticeImageSave',{noticeId:edit.id,mime:f.type,b64:b}).then(function(){return getAll();}).then(function(){var newer=notices.find(function(x){return x.id===edit.id;});newEditor(newer);}).catch(function(err){alert(err.message);$n('lnImgStatus').textContent='이미지 업로드 실패';});};r.readAsDataURL(f);});}
+ function openAdmin(){if(!isMaster())return;active=null;masterMode=true;openWindow('마스터 관리자 · 직원공지','<div class="ln-toolbar"><button class="ln-btn primary" id="lnCreate">＋ 새 공지 등록</button><span class="ln-note">공지·게시 예약·팝업·이미지를 관리합니다.</span></div><div id="lnAdminRows">'+(notices.length?notices.map(function(n){return '<div class="ln-board-row"><span class="ln-label"><b>'+xe(n.title)+'</b><small style="display:block;color:#7a8391">'+(!n.enabled?'비공개':eligible(n)?'게시중':'예약/기간종료')+' · '+xe(n.start||'즉시')+' ~ '+xe(n.end||'무기한')+'</small></span><button class="ln-btn" data-ln-edit="'+xe(n.id)+'">수정</button><button class="ln-btn danger" data-ln-delete="'+xe(n.id)+'">삭제</button></div>';}).join(''):'<div class="ln-empty">공지사항이 없습니다.</div>')+'</div>');}
  function boot(){if(!userReady())return;getAll();if(pollTimer)clearInterval(pollTimer);pollTimer=setInterval(function(){if(userReady())getAll();},90000);}
  $n('lnClose').addEventListener('click',close);$n('lnLayer').addEventListener('click',function(e){if(e.target===this)close();});$n('lnTopRoll').addEventListener('click',function(){openNotice(visible()[roll]);});$n('lnBoardBtn').addEventListener('click',openBoard);$n('lnMasterBtn').addEventListener('click',openAdmin);
  document.addEventListener('click',function(e){var b=e.target.closest('[data-ln-id]');if(b){openNotice(notices.find(function(n){return n.id===b.dataset.lnId;}));return;}if(e.target.id==='lnBack'){openBoard();return;}if(e.target.id==='lnCancel'){openAdmin();return;}if(e.target.id==='lnCreate'){newEditor(null);return;}b=e.target.closest('[data-ln-edit]');if(b){newEditor(notices.find(function(n){return n.id===b.dataset.lnEdit;}));return;}b=e.target.closest('[data-ln-delete]');if(b){if(!isMaster())return;if(!confirm('공지를 삭제하시겠습니까?'))return;post('noticeDelete',{id:b.dataset.lnDelete}).then(getAll).then(openAdmin).catch(function(err){alert(err.message);});}});
