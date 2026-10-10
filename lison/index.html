@@ -285,9 +285,10 @@
 #lnTopRoll.ln-roll:hover span{text-decoration:underline}
 </style>
 </head><body>
+ 
 <title>리손패키지 거래처 관리 ERP</title>
 <meta name="robots" content="noindex,nofollow">
-<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbwtm2Y-XIbzcu3872hFo2F6zMNWlT-SlI4IKokcbzCYgaONrIAaZkkIp9jJKPqzRBkE/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
+<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbxrTi15gTqc4L_UvNPjar4RmOwuFwbglMb5sIywI1b_rT2-nS58pdvWHYN6mB1569Tl/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1226,7 +1227,7 @@ function themeFromHex(hex) {
 <header class="top">
   <div id="demoBar" class="demo" hidden>체험판 · 리손패키지 정산 캡처와 작업의뢰서 2장으로 채웠어요. 여기서 고친 내용은 시트에 저장되지 않아요.</div>
   <div class="band"><div class="top-in">
-    <div class="brand"><span class="logo" id="logoBox" hidden></span><b id="brandName">리손패키지</b><span class="brand-sub"> </span><button type="button" id="lnTopRoll" class="ln-roll" hidden><strong>[공지]</strong><span id="lnRollText"></span></button></div>
+    <div class="brand"><span class="logo" id="logoBox" hidden></span><b id="brandName">리손패키지</b><button type="button" id="lnTopRoll" class="ln-roll" hidden><strong>[공지]</strong><span id="lnRollText"></span></button></div>
     <span class="sync" id="sync"></span>
     <button class="icon-btn" type="button" id="btnRefresh" title="시트에서 다시 불러오기">↻<span class="hide-m"> 새로고침</span></button>
     <a class="icon-btn hide-m" id="sheetLink" target="_blank" rel="noopener" hidden>시트 열기</a>
@@ -5434,7 +5435,11 @@ function clientShortRegion(address) {
   if(parts.length<2)return parts[0]||'—';
   var region=parts[0], city=parts[1];
   // 서울/광역시는 구 단위, 도 단위는 시 또는 군 단위 표시
-  if(/^(서울|부산|대구|인천|광주|대전|울산|세종)$/.test(region))city=city.replace(/(특별자치시|자치구|시|구)$/,'');
+  if(/^(서울|부산|대구|인천|광주|대전|울산|세종)$/.test(region)){
+    // 서구·중구·동구·북구·남구처럼 두 글자짜리 구명은 통째로 표시
+    if(/구$/.test(city) && city.length===2){ /* 원래 구명 유지 */ }
+    else city=city.replace(/(특별자치시|자치구|시|구)$/,'');
+  }
   else city=city.replace(/(특별자치시|시|군)$/,'');
   if(!city)return region;
   return region+' '+city;
@@ -5457,10 +5462,10 @@ function renderClients() {
   clPick('sale', coNames()); var _all = names; names = clPage('sale', _all);
   if (!names.length) { $('#cTable').innerHTML = '<tbody><tr><td class="empty">업체가 없습니다.</td></tr></tbody>'; $('#cCards').innerHTML = '<div class="empty">업체가 없습니다.</div>'; return; }
   $('#dlRep').innerHTML = uniq(S.clients.map(function (c) { return c['영업담당']; }).concat((typeof usersCache !== 'undefined' ? usersCache : []).map(function (u) { return u.name; }))).filter(Boolean).map(function (x) { return '<option value="' + esc(x) + '">'; }).join('');
-  $('#cTable').innerHTML = '<thead><tr><th>업체명</th><th>내부 담당자</th><th>사업자번호</th><th>대표자</th><th>지역</th><th>업체 담당자</th><th>연락처</th><th class="r">발주 수</th><th class="r">미수잔액</th><th></th></tr></thead><tbody>' +
+  $('#cTable').innerHTML = '<thead><tr><th>업체명</th><th>내부 담당자</th><th>사업자번호</th><th>대표자</th><th>지역</th><th>이메일주소</th><th class="r">발주 수</th><th class="r">미수잔액</th><th></th></tr></thead><tbody>' +
     names.map(function (x) {
       var c = clientBy(x), cnt = clientOrderCount(S.orders.filter(function (o) { return o['업체명'] === x; }));
-      return '<tr class="go" data-co="' + esc(x) + '"><td><b>' + esc(x) + '</b>' + (c['업체명'] ? '' : ' <span class="sub">정보 없음</span>') + '</td><td>' + (c['영업담당'] ? '<span class="pill ok">' + esc(c['영업담당']) + '</span>' : '<span class="sub">미지정</span>') + '</td><td>' + esc(c['사업자번호']) + '</td><td>' + esc(c['대표자']) + '</td><td title="' + esc(c['주소']||'') + '">' + esc(clientShortRegion(c['주소'])) + '</td><td>' + esc(c['담당자']) + '</td><td>' + esc(c['연락처']) + '</td><td class="r">' + cnt + '</td><td class="r ' + (balanceOf(x) > 0 ? 'red' : '') + '">' + won(balanceOf(x)) + '</td><td><button type="button" class="btn sm" data-go="1">원장</button></td></tr>';
+      return '<tr class="go" data-co="' + esc(x) + '"><td><b>' + esc(x) + '</b>' + (c['업체명'] ? '' : ' <span class="sub">정보 없음</span>') + '</td><td>' + (c['영업담당'] ? '<span class="pill ok">' + esc(c['영업담당']) + '</span>' : '<span class="sub">미지정</span>') + '</td><td>' + esc(c['사업자번호']) + '</td><td>' + esc(c['대표자']) + '</td><td title="' + esc(c['주소']||'') + '">' + esc(clientShortRegion(c['주소'])) + '</td><td>' + (c['이메일'] ? '<a href="mailto:' + esc(c['이메일']) + '" onclick="event.stopPropagation()">' + esc(c['이메일']) + '</a>' : '<span class="sub">미등록</span>') + '</td><td class="r">' + cnt + '</td><td class="r ' + (balanceOf(x) > 0 ? 'red' : '') + '">' + won(balanceOf(x)) + '</td><td><button type="button" class="btn sm" data-go="1">원장</button></td></tr>';
     }).join('') + '</tbody>';
   $('#cCards').innerHTML = names.map(function (x) {
     var c = clientBy(x);
