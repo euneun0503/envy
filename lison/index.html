@@ -276,10 +276,18 @@
 .order-peek-muted{font-size:12px;color:var(--muted,#6b7280)}.order-peek-status{display:inline-block;background:#e9f3fc;color:#245b94;padding:3px 8px;font-size:11px;font-weight:700;border-radius:999px}
 @media(max-width:560px){.order-peek-head{padding:17px}.order-peek-content{padding:16px}.order-peek-grid{grid-template-columns:1fr}.order-peek-table{font-size:11px}}
 </style>
+<style id="notice-contrast-overrides">
+/* 상단 직원공지: 박스 없이 주황색 굵은 글씨로만 표시 */
+#lnTopRoll.ln-roll{background:transparent;border:0;border-radius:0;box-shadow:none;padding:4px 8px;gap:8px;color:inherit;max-width:min(42vw,450px)}
+#lnTopRoll.ln-roll strong{display:inline;flex:none;background:transparent;border:0;box-shadow:none;color:#ffb12a;font-size:13px;font-weight:900;letter-spacing:-.2px;padding:0;border-radius:0;white-space:nowrap}
+#lnTopRoll.ln-roll span{color:#fff7e5;font-weight:600}
+#lnTopRoll.ln-roll:hover{background:transparent;border:0}
+#lnTopRoll.ln-roll:hover span{text-decoration:underline}
+</style>
 </head><body>
 <title>리손패키지 거래처 관리 ERP</title>
 <meta name="robots" content="noindex,nofollow">
-<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbz7WILM5tTd9g1Crih2l2-K3sch_1C-v7dkhPGkz30JdfC8MnPqdn9ATMRkNQE-A2Hg/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
+<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbwtm2Y-XIbzcu3872hFo2F6zMNWlT-SlI4IKokcbzCYgaONrIAaZkkIp9jJKPqzRBkE/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -2892,7 +2900,7 @@ document.addEventListener('click', function (e) {
   var o = orderById(host.getAttribute('data-id')); if (!o) return;
   var act = b.getAttribute('data-act');
   if (act === 'to-prod') { openOrderProductionDetail(o); return; }
-  if (act === 'to-ledger') { goLedger(o['업체명']); return; }
+  if (act === 'to-ledger') { openOrderPeek(o, 'ledger'); return; }
   if (act === 'edit') editOrder(o, false);
   else if (act === 'copy') editOrder(o, true);
   else if (act === 'del') delOrder(o);
@@ -5356,7 +5364,30 @@ document.addEventListener('click',function(ev){if(ev.target.closest('[data-plate
 document.addEventListener('click',function(e){var b=e.target.closest('[data-plate-tab]');if(b){plateDetailTab(b.dataset.plateTab);return;}var action='',payload={};if(e.target.closest('[data-plate-save-move]')){action='movePlate';payload.move={plateId:selectedPlateId,to:document.getElementById('plateMoveTo').value,region:document.getElementById('plateMoveRegion').value,reason:document.getElementById('plateMoveReason').value,url:document.getElementById('plateMoveUrl').value};}else if(e.target.closest('[data-plate-save-link]')){action='linkPlate';payload.link={plateId:selectedPlateId,relation:document.getElementById('plateLinkType').value,otherId:document.getElementById('plateLinkOther').value,client:document.getElementById('plateLinkClient').value,product:document.getElementById('plateLinkProduct').value,origin:document.getElementById('plateLinkOrigin').value};}else if(e.target.closest('[data-plate-save-file]')){action='addPlateFile';payload.file={plateId:selectedPlateId,kind:document.getElementById('plateFileKind').value,name:document.getElementById('plateFileName').value,url:document.getElementById('plateFileUrl').value};}if(!action)return;var btn=e.target.closest('button');btn.disabled=true;var before=btn.textContent;btn.textContent='저장 중...';api(action,payload,{wait:true}).then(function(){toast('저장되었습니다.');plateDetailTab(action==='movePlate'?'moves':action==='linkPlate'?'links':'files');renderPlates();}).catch(function(err){toast('저장 실패: '+(err.message||err));}).finally(function(){btn.disabled=false;btn.textContent=before;});});
 ['plateSearch','plateState'].forEach(function(id){document.getElementById(id).addEventListener(id==='plateSearch'?'input':'change',function(){platePage=1;renderPlates();});});
 document.getElementById('plateLegacySearch').addEventListener('input',function(){plateLegacyPage=1;renderPlateLegacy();});
-document.getElementById('plateForm').addEventListener('submit',function(e){e.preventDefault();var f=e.currentTarget,p={};Array.from(f.elements).forEach(function(x){if(x.name)p[x.name]=x.value.trim();});var btn=document.getElementById('plateSaveBtn');btn.disabled=true;btn.textContent='저장 중...';api('savePlate',{plate:p},{wait:true}).then(function(){closeM('plateM');renderPlates();toast('동판 정보가 저장되었습니다.');}).catch(function(e){toast('동판 저장 실패: '+(e.message||e));}).finally(function(){btn.disabled=false;btn.textContent='시트에 저장';});});
+document.getElementById('plateForm').addEventListener('submit',function(e){
+ e.preventDefault();var f=e.currentTarget,p={};Array.from(f.elements).forEach(function(x){if(x.name)p[x.name]=x.value.trim();});
+ var btn=document.getElementById('plateSaveBtn'),legacy=window.__plateDraft&&window.__plateDraft.__legacySource;
+ if(legacy){
+   var seed=window.__plateDraft,ref=seed.__legacyNo,original=String(seed['거래처명']||'').trim(),target=String(p['거래처명']||'').trim();
+   if(!target){toast('거래처를 선택해 주세요.');return;}
+   if(target===original){toast('변경된 거래처명이 없습니다.');return;}
+   if(!(S.clients||[]).some(function(c){return String(c['업체명']||'').trim()===target;})){
+     toast('거래처 관리에 등록된 업체명을 정확히 입력해 주세요.');return;
+   }
+   if(!confirm('원본 동판 '+ref+'의 연결 거래처를 변경하시겠습니까?\n\n기존: '+original+'\n변경: '+target+'\n\n원본 시트는 유지하고, 동판 목록과 발주 검색에 새 거래처를 적용합니다.'))return;
+   btn.disabled=true;btn.textContent='연결 저장 중...';
+   api('setLegacyPlateClient',{plateRef:ref,targetClient:target,expectedProduct:seed['품명']},{wait:true})
+    .then(function(result){
+      if(!result||result.plateRef!==ref||result.targetClient!==target)throw new Error('서버에서 연결 변경을 확인하지 못했습니다.');
+      S.legacyPlates=result.legacyPlates||[];
+      window.__plateDraft=Object.assign({},seed,{'거래처명':target});
+      closeM('plateM');renderPlates();renderPlateLegacy();toast('원본 동판 거래처 연결이 변경되었습니다. 발주 검색에도 적용됩니다.');
+    }).catch(function(err){toast('거래처 연결 실패: '+(err.message||err));})
+    .finally(function(){btn.disabled=false;btn.textContent='시트에 저장';});
+   return;
+ }
+ btn.disabled=true;btn.textContent='저장 중...';api('savePlate',{plate:p},{wait:true}).then(function(){closeM('plateM');renderPlates();toast('동판 정보가 저장되었습니다.');}).catch(function(err){toast('동판 저장 실패: '+(err.message||err));}).finally(function(){btn.disabled=false;btn.textContent='시트에 저장';});
+});
 
 
 /* 매출거래처 통합: 읽기/미리보기는 로컬 데이터, 확정 저장은 서버 검증 후 처리 */
