@@ -148,6 +148,7 @@
 .order-peek-stages td small{color:#667280;font-size:10px}
 .order-peek-sheet{width:min(980px,calc(100vw - 30px))!important;max-width:980px!important}
 @media(max-width:650px){.order-peek-grid-table{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.lison-plate-sub{margin-top:3px;color:#7d8792;font-size:11px;font-weight:500;line-height:1.5}
 </style>
 
 
@@ -2866,7 +2867,7 @@ function renderNoSaleBox(rows) {
 function lisonOrderGroupDetail(o){
   var rows=(S.orders||[]).filter(function(x){return groupKey(x)===groupKey(o);});
   var h='<div class="tw"><table class="order-peek-table"><thead><tr><th>공정 / 매입처</th><th>규격·내역</th><th>수량</th><th>단가</th><th>매입액</th></tr></thead><tbody>';
-  h+=rows.filter(function(x){return x['매입처']||buyAmt(x);}).map(function(x){return '<tr><td>'+esc(x['매입처']||'미지정')+'</td><td>'+esc(x['규격']||'')+'</td><td class="r">'+esc(x['매입수량']||'-')+'</td><td class="r">'+esc(x['매입단가']||'-')+'</td><td class="r">'+won(buyAmt(x))+'</td></tr>';}).join('');
+  h+=rows.filter(function(x){return x['매입처']||buyAmt(x);}).map(function(x){return '<tr><td>'+esc(x['매입처']||'미지정')+'</td><td>'+esc(x['규격']||'')+'</td><td class="r">'+(x['매입수량']===''||x['매입수량']==null?'-':won(x['매입수량']))+'</td><td class="r">'+(x['매입단가']===''||x['매입단가']==null?'-':won(x['매입단가']))+'</td><td class="r">'+won(buyAmt(x))+'</td></tr>';}).join('');
   return h+'</tbody></table></div>';
 }
 function lisonShowCancelled(){
@@ -2875,18 +2876,38 @@ function lisonShowCancelled(){
   var rows=Object.keys(unique).map(function(k){return unique[k];}).sort(function(a,b){return String(b['취소일시']).localeCompare(String(a['취소일시']));});
   preview('발주 취소 이력','읽기 전용','<div class="tw"><table class="order-peek-table"><thead><tr><th>취소일시</th><th>거래처</th><th>발주일</th><th>제품명</th><th>사유</th><th>담당자</th></tr></thead><tbody>'+rows.map(function(x){return '<tr><td>'+esc(x['취소일시'])+'</td><td>'+esc(x['거래처'])+'</td><td>'+esc(x['발주일'])+'</td><td>'+esc(x['제품명'])+'</td><td>'+esc(x['사유'])+'</td><td>'+esc(x['담당자']||'-')+'</td></tr>';}).join('')+'</tbody></table></div>');
 }
+function lisonPlateChildren(g){
+  var seen = {};
+  return g.rows.filter(function(x){return x!==g.main&&/동판|제판|판비|판제작|판수정|동판비/i.test(pkOf(x));})
+    .filter(function(x){var n=pkOf(x);if(seen[n])return false;seen[n]=true;return true;})
+    .map(function(x){return '<div class="lison-plate-sub">└ 동판 · '+esc(pkOf(x))+'</div>';}).join('');
+}
 function renderList() {
-  var source=filteredOrders(), sales=source.reduce(function(s,o){return s+supply(o);},0), buys=source.reduce(function(s,o){return s+buyAmt(o);},0);
+  var qProduct = $('#qText').value.trim().toLowerCase();
+  // Search on any order line, then show the complete linked order (including plates and cost rows).
+  var source = filteredOrders();
+  if(qProduct){
+    var matching = {};
+    source.forEach(function(o){matching[groupKey(o)] = true;});
+    source = sortBy(S.orders.filter(function(o){return !!matching[groupKey(o)];}),function(o){return (o['발주일']||'')+pad(o._row||0);}).reverse();
+  }
+  var sales=source.reduce(function(s,o){return s+supply(o);},0), buys=source.reduce(function(s,o){return s+buyAmt(o);},0);
   var groups=[], by={};
-  source.forEach(function(o){var k=groupKey(o);if(!by[k]){by[k]={key:k,rows:[],main:o};groups.push(by[k]);}by[k].rows.push(o);if(isSale(o)&&(!isSale(by[k].main)||supply(o)>supply(by[k].main)))by[k].main=o;});
+  source.forEach(function(o){var k=groupKey(o);if(!by[k]){by[k]={key:k,rows:[],main:o};groups.push(by[k]);}by[k].rows.push(o);});
+  groups.forEach(function(g){
+    var hostName = g.key.split('|').slice(2).join('|');
+    var preferred = g.rows.filter(function(o){return pkOf(o)===hostName;});
+    var candidates = preferred.length ? preferred : g.rows;
+    g.main = candidates.filter(isSale).sort(function(a,b){return supply(b)-supply(a);})[0]||candidates[0];
+  });
   $('#qSum').innerHTML=groups.length+'건 · 매출 <b class="num">'+won(sales)+'</b> · 매입 <b class="num">'+won(buys)+'</b> · 마진 <b class="num">'+won(sales-buys)+'</b>';
   if((S.orderCancellations||[]).length)$('#qSum').insertAdjacentHTML('beforeend',' · <button type="button" class="btn sm" onclick="lisonShowCancelled()">취소 이력 '+uniq(S.orderCancellations.map(function(x){return (x['거래처']||'')+'|'+(x['발주일']||'')+'|'+(x['제품명']||'');})).length+'건</button>');
   var _noSale=noSaleKeys();renderNoSaleBox(source.filter(function(o){return !!_noSale[groupKey(o)];}));
   if(!groups.length){if($('#oPager'))$('#oPager').innerHTML='';$('#oTable').innerHTML='<tbody><tr><td class="empty">조건에 맞는 발주가 없습니다.</td></tr></tbody>';$('#oCards').innerHTML='';return;}
   var _LP=(typeof pgSlice==='function'&&PG.list)?pgSlice('list',groups):{rows:groups,pager:'',from:0};groups=_LP.rows;
   if($('#oPager'))$('#oPager').innerHTML=_LP.pager;
-  $('#oTable').innerHTML='<thead><tr><th>발주일</th><th>업체명</th><th>제품명</th><th>수량 × 단가</th><th class="r">매출</th><th class="r">매입합계</th><th class="r">마진</th><th>출고</th><th>계산서</th><th>입금</th><th>관리</th></tr></thead><tbody>'+groups.map(function(g){var o=g.main,b=g.rows.reduce(function(v,x){return v+buyAmt(x);},0),v=g.rows.reduce(function(v,x){return v+supply(x);},0);return '<tr data-id="'+esc(o.ID)+'"><td>'+dShort(o['발주일'])+'</td><td>'+esc(o['업체명'])+'</td><td class="item"><button type="button" class="order-item-open" data-act="to-prod">'+esc(o['품목']||'(품목 없음)')+'</button><br><button type="button" class="order-ledger-link" data-act="to-ledger">원장보기 ↗</button></td><td>'+qtyText(o)+'</td><td class="r">'+won(v)+'</td><td class="r">'+won(b)+'</td><td class="r">'+won(v-b)+'</td><td>'+chipShip(o)+'</td><td>'+chipInv(o)+'</td><td>'+chipPaid(o)+'</td><td><button type="button" class="btn sm" data-act="edit">수정</button> <button type="button" class="btn sm" data-act="more">⋯</button></td></tr>';}).join('')+'</tbody>';
-  $('#oCards').innerHTML=groups.map(function(g){var o=g.main,b=g.rows.reduce(function(v,x){return v+buyAmt(x);},0),v=g.rows.reduce(function(v,x){return v+supply(x);},0);return '<div class="card" data-id="'+esc(o.ID)+'"><div class="row"><span class="co">'+esc(o['업체명'])+'</span><span class="dt">'+dShort(o['발주일'])+'</span></div><div class="it"><button type="button" class="order-item-open" data-act="to-prod">'+esc(o['품목'])+'</button></div><div class="row"><span>매출 '+won(v)+'</span><span>매입 '+won(b)+'</span><b>마진 '+won(v-b)+'</b></div><div class="acts"><button type="button" class="order-ledger-link" data-act="to-ledger">원장보기 ↗</button><button type="button" class="btn sm" data-act="edit">수정</button><button type="button" class="btn sm" data-act="more">⋯</button></div></div>';}).join('');
+  $('#oTable').innerHTML='<thead><tr><th>발주일</th><th>업체명</th><th>제품명</th><th>수량 × 단가</th><th class="r">매출</th><th class="r">매입합계</th><th class="r">마진</th><th>출고</th><th>계산서</th><th>입금</th><th>관리</th></tr></thead><tbody>'+groups.map(function(g){var o=g.main,b=g.rows.reduce(function(v,x){return v+buyAmt(x);},0),v=g.rows.reduce(function(v,x){return v+supply(x);},0);return '<tr data-id="'+esc(o.ID)+'"><td>'+dShort(o['발주일'])+'</td><td>'+esc(o['업체명'])+'</td><td class="item"><button type="button" class="order-item-open" data-act="to-prod">'+esc(o['품목']||'(품목 없음)')+'</button>'+lisonPlateChildren(g)+'<br><button type="button" class="order-ledger-link" data-act="to-ledger">원장보기 ↗</button></td><td>'+qtyText(o)+'</td><td class="r">'+won(v)+'</td><td class="r">'+won(b)+'</td><td class="r">'+won(v-b)+'</td><td>'+chipShip(o)+'</td><td>'+chipInv(o)+'</td><td>'+chipPaid(o)+'</td><td><button type="button" class="btn sm" data-act="edit">수정</button> <button type="button" class="btn sm" data-act="more">⋯</button></td></tr>';}).join('')+'</tbody>';
+  $('#oCards').innerHTML=groups.map(function(g){var o=g.main,b=g.rows.reduce(function(v,x){return v+buyAmt(x);},0),v=g.rows.reduce(function(v,x){return v+supply(x);},0);return '<div class="card" data-id="'+esc(o.ID)+'"><div class="row"><span class="co">'+esc(o['업체명'])+'</span><span class="dt">'+dShort(o['발주일'])+'</span></div><div class="it"><button type="button" class="order-item-open" data-act="to-prod">'+esc(o['품목'])+'</button>'+lisonPlateChildren(g)+'</div><div class="row"><span>매출 '+won(v)+'</span><span>매입 '+won(b)+'</span><b>마진 '+won(v-b)+'</b></div><div class="acts"><button type="button" class="order-ledger-link" data-act="to-ledger">원장보기 ↗</button><button type="button" class="btn sm" data-act="edit">수정</button><button type="button" class="btn sm" data-act="more">⋯</button></div></div>';}).join('');
 }
 ['#qText', '#qMonth', '#qState', '#qCo'].forEach(function (s) { $(s).addEventListener(s === '#qText' ? 'input' : 'change', function () { renderList(); }); });
 $('#nsBox').addEventListener('click', function (e) {
@@ -4005,9 +4026,15 @@ function gkMap() {
   S.orders.forEach(function (o) { if (!o['업체명'] || !o['발주일']) return; var b = o['업체명'] + '|' + o['발주일']; (by[b] = by[b] || []).push(o); });
   Object.keys(by).forEach(function (b) {
     var pks = {}; by[b].forEach(function (o) { var q = pkOf(o); (pks[q] = pks[q] || []).push(o); });
-    var names = Object.keys(pks), sold = names.filter(function (q) { return !/^\[클레임/.test(q) && pks[q].some(isSale); });
+    var names = Object.keys(pks), plateName = function(q){return /동판|제판|판비|판제작|판수정|동판비/i.test(q) && !/^[\[]?(클레임|재납품)/.test(q);};
+    var sold = names.filter(function (q) { return !/^\[클레임/.test(q) && !plateName(q) && pks[q].some(isSale); });
     var host = sortBy(sold, function (q) { return pks[q].reduce(function (s, o) { return s + supply(o); }, 0); }).pop();
-    names.forEach(function (q) { var k = b + '|' + (/^\[(클레임|재납품)/.test(q) || sold.indexOf(q) >= 0 || !host ? q : host); pks[q].forEach(function (o) { _gkMap[o.ID || ('r' + o._row)] = k; }); });
+    names.forEach(function (q) {
+      var attached = plateName(q) && sold.length === 1 ? sold[0] : q;
+      var linked = !plateName(q) && !/^\[(클레임|재납품)/.test(q) && sold.indexOf(q) < 0 && host ? host : attached;
+      var k = b + '|' + linked;
+      pks[q].forEach(function (o) { _gkMap[o.ID || ('r' + o._row)] = k; });
+    });
   });
   return _gkMap;
 }
