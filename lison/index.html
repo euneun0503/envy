@@ -319,7 +319,7 @@
 </head><body>
 <title>리손패키지 거래처 관리 ERP</title>
 <meta name="robots" content="noindex,nofollow">
-<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycby6TL2FNIJ0hbbPe3kiM1NmThrqq0YoTukYvddRezBwK9iO54EXuJ5kdGFIizae1qNX/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
+<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbw9DyL1L7OfSSoj7_pxQ5Ers1y-1XEZohElms7IFzgrCL4W8FuiEmkQjiT5LvNwSrd0/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1064,6 +1064,14 @@ button.pc-title{border:0;background:none;padding:0;text-align:left;cursor:pointe
 .sr-name{display:flex;flex-direction:column;min-width:0;flex:1 1 220px}
 .sr-name .sub{font-size:12px}
 .sr-ct{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.sr-linkbtn{display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:3px 8px;border-radius:999px;border:1px solid #d7dde6;background:#fff;color:#245c9a;font-size:11px;font-weight:700;cursor:pointer}
+.sr-linkbtn:hover{background:#f4f8ff}
+.wo-vendor-row td.factory-name{background:#fff !important}
+.bandpicker{position:fixed;z-index:1200;min-width:180px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px rgba(15,23,42,.16);padding:10px}
+.bandpicker[hidden]{display:none !important}
+.bandpicker .ttl{font-size:12px;font-weight:800;color:var(--ink);margin-bottom:8px}
+.bandpicker .bp-row{display:flex;flex-direction:column;gap:6px}
+.bandpicker .bp-note{margin-top:8px;font-size:11px;color:var(--muted)}
 .sr-btns{display:flex;gap:6px;flex-wrap:wrap}
 .linkbtn{border:0;background:none;padding:0;color:var(--primary);text-decoration:underline;cursor:pointer;font:inherit}
 .fform{border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:10px;background:var(--raise)}
@@ -5092,15 +5100,77 @@ function renderSendPanel(g, facs) {
   var list = pd.fac ? facs.filter(function (f) { return f.name === pd.fac; }) : facs;
   var auto = facs.filter(function (f) { var x = factoryBy(f.name), a = sendAvail(x), m = x && x['전송방법']; return m === '이메일' && a.email; });
   $('#pdSend').innerHTML = (list.length ? list.map(function (f) {
-    return '<div class="sendrow"><div class="sr-name"><b>' + esc(f.name) + '</b><span class="sub">' + esc(f.works.join(', ')) + '</span><span class="sr-ct">' + contact(f.name) + '</span></div><div class="sr-btns">' + btns(f.name) + '</div></div>';
+    return '<div class="sendrow"><div class="sr-name"><b>' + esc(f.name) + '</b><span class="sub">' + esc(f.works.join(', ')) + '</span><span class="sr-ct">' + contact(f.name) + '<button type="button" class="sr-linkbtn" data-banddoc="' + esc(f.name) + '">전달용 작지서</button></span></div><div class="sr-btns">' + btns(f.name) + '</div></div>';
   }).join('') : '') +
     (!pd.fac && facs.length > 1 ? '<div class="bar" style="margin-top:8px"><button type="button" class="btn p" id="pdSendAll"' + (auto.length ? '' : ' disabled') + '>기본 방법으로 ' + auto.length + '곳 한 번에 보내기</button><span class="sub">공장마다 그 공장 몫이 표시된 지시서를 따로 보내요. 기본 전송 방법이 이메일인 업체만 자동 발송합니다. 팩스는 직접 전송합니다.</span></div>' : '') +
     '<p class="hint" style="margin-top:6px">PC 팩스는 밴딩된 PDF를 저장한 후 인터넷팩스 웹사이트에서 직접 첨부·발송합니다. 자동 전송이 아닙니다.</p>';
+}
+var woBandCtx = null;
+function ensureBandPicker() {
+  var box = document.getElementById('woBandPicker');
+  if (box) return box;
+  box = document.createElement('div');
+  box.id = 'woBandPicker';
+  box.className = 'bandpicker';
+  box.hidden = true;
+  box.innerHTML = '<div class="ttl">전달용 작지서 형식 선택</div><div class="bp-row"><button type="button" class="btn sm" data-bandfmt="png">이미지(PNG)</button><button type="button" class="btn sm" data-bandfmt="pdf">PDF</button></div><div class="bp-note">필요한 형식 하나만 내려받습니다.</div>';
+  box.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-bandfmt]');
+    if (!btn || !woBandCtx) return;
+    var fmt = btn.getAttribute('data-bandfmt');
+    var g = woBandCtx.g, fac = woBandCtx.fac, opener = woBandCtx.opener;
+    closeBandPicker();
+    if (fmt === 'png') {
+      busy(opener, true);
+      return woCanvas(g, fac, false).then(function (cv) {
+        var url = cv.toDataURL('image/png');
+        cv.toBlob(function (blob) {
+          deliver(blob, woFileName(g, fac, false, 'png'), 'image', url);
+          busy(opener, false);
+        }, 'image/png');
+      }).catch(function (er) {
+        busy(opener, false);
+        toast('이미지 생성 실패: ' + (er.message || er));
+      });
+    }
+    busy(opener, true);
+    woPdf(g, fac, false).then(function (r) {
+      deliver(r.blob, r.name, 'pdf', r.preview);
+      busy(opener, false);
+    }).catch(function (er) {
+      busy(opener, false);
+      toast('PDF 생성 실패: ' + (er.message || er));
+    });
+  });
+  document.body.appendChild(box);
+  document.addEventListener('click', function (e) {
+    if (!box.hidden && !box.contains(e.target) && !(e.target.closest && e.target.closest('[data-banddoc]'))) closeBandPicker();
+  });
+  return box;
+}
+function closeBandPicker() {
+  var box = document.getElementById('woBandPicker');
+  if (box) box.hidden = true;
+  woBandCtx = null;
+}
+function openBandPicker(opener, g, fac) {
+  var box = ensureBandPicker();
+  woBandCtx = { opener: opener, g: g, fac: fac };
+  box.hidden = false;
+  var r = opener.getBoundingClientRect();
+  var top = r.bottom + 8;
+  var left = Math.min(window.innerWidth - 196, Math.max(12, r.left));
+  box.style.top = top + 'px';
+  box.style.left = left + 'px';
 }
 $('#pdM').addEventListener('click', function (e) {
   var b, g = curDetail(); if (!g) return;
   if ((b = e.target.closest('[data-fac]')) && b.classList.contains('chip')) { pd.fac = b.getAttribute('data-fac'); return renderDetail(); }
   if ((b = e.target.closest('[data-send]'))) return b.getAttribute('data-send') === 'fax' ? pcFaxWo(g, b.getAttribute('data-fac'), b) : sendWo(g, b.getAttribute('data-fac'), b.getAttribute('data-send'), b);
+  if ((b = e.target.closest('[data-banddoc]'))) {
+    openBandPicker(b, g, b.getAttribute('data-banddoc'));
+    return;
+  }
   if ((b = e.target.closest('[data-factedit]'))) return openFactories(b.getAttribute('data-factedit'), woFactories(g).filter(function (f) { return f.name === b.getAttribute('data-factedit'); }).map(function (f) { return f.works.join(', '); })[0]);
   if (e.target.closest('#pdSendAll')) return sendAll(g, e.target.closest('#pdSendAll'));
   if (e.target.closest('#pdGw')) return openFactories('', '', true);
@@ -9906,7 +9976,9 @@ function woHtml(g, fac, client, docId) {
     if (/\blison-band\b/.test(cls)) return '<td' + attr + '><span style="display:block;width:85%;height:13px;margin:auto;background:#a9afb7;border-radius:1px"></span></td>';
     if (c.k === 'IMG') return '<td' + attr + ' class="img">' + (c.src ? '<img alt="도안" src="' + c.src + '">' : '<div class="noimg">' + (specOf(g).도안 ? '도안 이미지를 불러오는 중…' : '작업 사양 입력에서 도안 이미지를 넣으면 여기에 나와요') + '</div>') + '</td>';
     if (/\bwrap\b/.test(c.cls)) return '<td' + attr + '><div class="w">' + esc(c.t).replace(/\n/g, '<br>') + '</div></td>';
-    return '<td' + attr + '><span class="c">' + esc(c.t) + '</span></td>';
+    var extraTdCls = '';
+    if (c.k === 'V') extraTdCls = ' factory-name';
+    return '<td' + attr + (extraTdCls ? ' class="' + (cls.trim() ? cls.trim() + ' ' : '') + extraTdCls + '"' : (cls.trim() ? ' class="' + cls.trim() + '"' : '')) + '><span class="c">' + esc(c.t) + '</span></td>';
   }
   var logo = LOGO.mode !== 'none' ? '<span class="pp-logo" style="margin:0">' + logoHtml(LOGO, 'paper') + '</span>' : '';
   var html = '<div class="paper wo2" id="' + docId + '">' +
@@ -9915,7 +9987,8 @@ function woHtml(g, fac, client, docId) {
     '<table class="wo2-t"><colgroup>' + WO_COLS.map(function (w) { return '<col style="width:' + w + 'px">'; }).join('') + '</colgroup><tbody>';
   M.rows.forEach(function (r) {
     if (r.gap) { html += '<tr class="gap"><td colspan="12"></td></tr>'; return; }
-    html += '<tr style="height:' + r.h + 'px">' + r.cells.map(cell).join('') + '</tr>';
+    var rowCls = r.cells.some(function(c){ return c.k === 'V'; }) ? ' class="wo-vendor-row"' : '';
+    html += '<tr' + rowCls + ' style="height:' + r.h + 'px">' + r.cells.map(cell).join('') + '</tr>';
   });
   html += '</tbody></table><div class="wo2-foot"><span>' + esc(me.name) + (me.addr ? ' · ' + esc(me.addr) : '') + (me.tel ? ' · T) ' + esc(me.tel) : '') + '</span><span>' + esc(woNo(g)) + (M.rev ? ' · Rev.' + M.rev : '') + '</span></div></div>';
   return html;
