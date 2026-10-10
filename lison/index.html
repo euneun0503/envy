@@ -305,15 +305,26 @@
 #oTable th:nth-child(7){width:9%}#oTable th:nth-child(8){width:8%}#oTable th:nth-child(9){width:6%}
 #oTable th:nth-child(10){width:6%}#oTable th:nth-child(11){width:6%}
 #oTable td .btn.sm{padding:4px 5px;min-width:0;font-size:10px}
+
+/* 총정리: 제품명 우선 가독성, 상태·날짜 열은 컴팩트하게 */
+#oTable{table-layout:fixed;width:100%;min-width:970px}
+#oTable th:nth-child(1){width:7%}#oTable th:nth-child(2){width:10%}#oTable th:nth-child(3){width:25%}
+#oTable th:nth-child(4){width:11%}#oTable th:nth-child(5){width:8%}#oTable th:nth-child(6){width:8%}
+#oTable th:nth-child(7){width:8%}#oTable th:nth-child(8){width:7%}#oTable th:nth-child(9){width:6%}
+#oTable th:nth-child(10){width:6%}#oTable th:nth-child(11){width:4%}
+#oTable td:nth-child(3){word-break:keep-all;overflow-wrap:anywhere}
+#oTable td:nth-child(n+8){font-size:9px;padding-left:1px;padding-right:1px}
+#oTable td:nth-child(11) .btn{padding:3px 1px;font-size:9px}
 </style>
 </head><body>
 <title>리손패키지 거래처 관리 ERP</title>
 <meta name="robots" content="noindex,nofollow">
-<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbxFV6myWSMLKoYjRr0PceusJevyFVdfMZwieXKjwxN7g-ZDUPvEth9FzuMIDQHTGf0/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
+<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycby6TL2FNIJ0hbbPe3kiM1NmThrqq0YoTukYvddRezBwK9iO54EXuJ5kdGFIizae1qNX/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <style>
 /* 거래명세서 품목별 가져오기: 기능 전용 스타일 */
@@ -1380,7 +1391,7 @@ function themeFromHex(hex) {
     <div class="panel">
       <div class="bar" style="margin-bottom:12px">
         <label class="f" style="flex:1 1 150px"><span>업체</span><select id="qCo" class="inp"></select></label>
-        <label class="f" style="flex:2 1 180px"><span>검색</span><input id="qText" class="inp" placeholder="품목·매입처·Spec·비고"></label>
+        <label class="f" style="flex:2 1 180px"><span>검색</span><input id="qText" class="inp" placeholder="업체·제품·규격·매입처·담당자 검색"></label>
         <label class="f"><span>월</span><select id="qMonth" class="inp"></select></label>
         <label class="f"><span>내부 담당자</span><select id="qRep" class="inp"><option value="">전체 담당자</option></select></label>
         <label class="f"><span>상태</span>
@@ -2267,7 +2278,7 @@ function themeFromHex(hex) {
     <div class="bar" style="margin-top:10px;align-items:center">
       <button type="button" class="btn p" id="pdSpec">작업 사양 입력</button><button type="button" class="btn sm" id="pdFinalArtwork">최종 동판 시안 첨부·교체</button>
       <label class="pm-check" style="margin:0" hidden><input type="checkbox" id="pd_client"> 고객사 이름 넣기</label><span class="sp" style="flex:1"></span>
-      <span class="sub" style="align-self:center;font-weight:600">작업의뢰서 받기</span><button type="button" class="btn sm" id="pdXlsx">엑셀</button><button type="button" class="btn sm" id="pdPdf">PDF</button><button type="button" class="btn sm" id="pdPng">PNG</button><button type="button" class="btn sm p" id="pdAll">3가지 한 번에</button><button type="button" class="btn sm" id="pdPrint">인쇄</button>
+      <span class="sub" style="align-self:center;font-weight:600">작업의뢰서 받기</span><button type="button" class="btn sm" id="pdXlsx">엑셀</button><button type="button" class="btn sm" id="pdPdf">PDF</button><button type="button" class="btn sm" id="pdPng">PNG</button><button type="button" class="btn sm p" id="pdAll">3가지 한 번에</button><button type="button" class="btn sm" id="pdPrint">인쇄</button><button type="button" class="btn sm" id="pdVendorZip">업체별 PNG·PDF ZIP</button><button type="button" class="btn sm" id="pdPcFax">PC 인터넷팩스</button>
       <label class="f" style="flex:0 0 auto"><span>보낼 때 첨부</span><select id="pdAttach" class="inp" style="min-height:32px"><option value="both">엑셀 + PDF</option><option value="xlsx">엑셀만</option><option value="pdf">PDF만</option></select></label>
     </div>
     <div class="sendbox" id="pdSend"></div>
@@ -2803,7 +2814,7 @@ function filteredOrders() {
     if (st === 'noinv' && !(isSale(o) && !o['세금계산서'])) return false;
     if (st === 'noship' && o['출고일']) return false;
     if (st === 'nosale' && !noSaleKeys()[groupKey(o)]) return false;
-    if (q && [o['업체명'], o['품목'], o['스펙'], o['매입처'], o['규격'], o['비고']].join(' ').toLowerCase().indexOf(q) < 0) return false;
+    if (q && [o['업체명'], o['품목'], o['스펙'], o['매입처'], o['규격'], o['비고'], o['영업담당'], (S.clients||[]).filter(function(c){return c['업체명']===o['업체명'];}).map(function(c){return [c['영업담당'],c['담당자']].join(' ');}).join(' ')].join(' ').toLowerCase().indexOf(q) < 0) return false;
     return true;
   });
 }
@@ -5039,12 +5050,38 @@ function sendAvail(f) {
   f = f || {};
   return { email: !!String(f['이메일'] || '').trim(), fax: !!cleanTel(f['팩스']).replace(/\D/g, ''), kakao: !!String(f['카톡링크'] || '').trim() };
 }
+/* PC 인터넷팩스 1단계: 자동 발송이 아니라 PDF 다운로드 + 웹사이트 연결 */
+function pcFaxWo(g,fac,btn){
+  if(!fac){toast('팩스 받을 업체를 먼저 선택해주세요.');return;}
+  var f=factoryBy(fac)||{}, fax=cleanTel(f['팩스']);
+  busy(btn,true);
+  woPdf(g,fac,false).then(function(r){
+    deliver(r.blob,r.name,'pdf',r.preview);
+    var hint='업체별 밴딩된 팩스용 PDF를 내려받았습니다. '+fac+(fax?' (팩스 '+fax+')':' (팩스번호 미등록)')+'\n인터넷팩스 사이트를 열어 PDF를 직접 첨부·전송하시겠습니까?';
+    return ask('PC 인터넷팩스 준비',hint,[]).then(function(ok){if(ok)window.open('https://www.enfax.co.kr/','_blank','noopener');});
+  }).catch(function(e){toast('팩스용 PDF 생성 실패: '+(e.message||e));}).then(function(){busy(btn,false);});
+}
+function vendorZipWo(g,btn){
+  if(typeof JSZip==='undefined')return toast('ZIP 도구를 불러오지 못했습니다. 인터넷 연결을 확인하세요.');
+  var facs=woFactories(g);
+  if(!facs.length)return toast('작업 사양에서 공정별 업체명을 먼저 등록해주세요.');
+  busy(btn,true);toast('업체별 밴딩 PNG·PDF를 만드는 중…');
+  var zip=new JSZip();
+  facs.reduce(function(p,f){return p.then(function(){
+    return woCanvas(g,f.name,false).then(function(cv){
+      return new Promise(function(resolve,reject){cv.toBlob(function(blob){if(!blob)return reject(new Error('PNG 생성 실패'));zip.file(woFileName(g,f.name,false,'png'),blob);resolve();},'image/png');})
+      .then(function(){zip.file(woFileName(g,f.name,false,'pdf'),canvasToPdf(cv,woFileName(g,f.name,false,'pdf')));});
+    });
+  });},Promise.resolve()).then(function(){return zip.generateAsync({type:'blob'});})
+  .then(function(blob){deliver(blob,'리손_업체별_밴딩_작업지시서_'+g.order.replace(/[^0-9]/g,'')+'.zip','zip');toast(facs.length+'개 업체별 작업지시서를 만들었습니다.');})
+  .catch(function(e){toast('업체별 ZIP 생성 실패: '+(e.message||e));}).then(function(){busy(btn,false);});
+}
 function renderSendPanel(g, facs) {
   var gw = (S.appSettings || {}).faxGateway || '';
   function btns(name) {
     var f = factoryBy(name), a = sendAvail(f), def = f && f['전송방법'];
     return '<button type="button" class="btn sm' + (def === '이메일' ? ' p' : '') + '" data-send="email" data-fac="' + esc(name) + '"' + (a.email ? '' : ' disabled title="이메일 없음"') + '>이메일</button>' +
-      '<button type="button" class="btn sm' + (def === '팩스' ? ' p' : '') + '" data-send="fax" data-fac="' + esc(name) + '"' + (a.fax ? '' : ' disabled title="팩스 번호 없음"') + '>팩스</button>' +
+      '<button type="button" class="btn sm' + (def === '팩스' ? ' p' : '') + '" data-send="fax" data-fac="' + esc(name) + '"' + (a.fax ? '' : ' disabled title="팩스 번호 없음"') + '>PC 팩스 준비</button>' +
       '<button type="button" class="btn sm' + (def === '카톡' ? ' p' : '') + '" data-send="kakao" data-fac="' + esc(name) + '">카톡</button>' +
       '<button type="button" class="btn sm" data-factedit="' + esc(name) + '">' + (f ? '연락처' : '공장 등록') + '</button>';
   }
@@ -5053,17 +5090,17 @@ function renderSendPanel(g, facs) {
     return [f['담당자'], cleanTel(f['전화']) && 'T ' + cleanTel(f['전화']), cleanTel(f['팩스']) && 'F ' + cleanTel(f['팩스']), f['이메일'], f['카톡링크'] && '카톡방 있음'].filter(Boolean).map(esc).join(' · ') || '연락처가 비어 있어요';
   }
   var list = pd.fac ? facs.filter(function (f) { return f.name === pd.fac; }) : facs;
-  var auto = facs.filter(function (f) { var x = factoryBy(f.name), a = sendAvail(x), m = x && x['전송방법']; return (m === '이메일' && a.email) || (m === '팩스' && a.fax); });
+  var auto = facs.filter(function (f) { var x = factoryBy(f.name), a = sendAvail(x), m = x && x['전송방법']; return m === '이메일' && a.email; });
   $('#pdSend').innerHTML = (list.length ? list.map(function (f) {
     return '<div class="sendrow"><div class="sr-name"><b>' + esc(f.name) + '</b><span class="sub">' + esc(f.works.join(', ')) + '</span><span class="sr-ct">' + contact(f.name) + '</span></div><div class="sr-btns">' + btns(f.name) + '</div></div>';
   }).join('') : '') +
-    (!pd.fac && facs.length > 1 ? '<div class="bar" style="margin-top:8px"><button type="button" class="btn p" id="pdSendAll"' + (auto.length ? '' : ' disabled') + '>기본 방법으로 ' + auto.length + '곳 한 번에 보내기</button><span class="sub">공장마다 그 공장 몫이 표시된 지시서를 따로 보내요. 기본 전송 방법이 이메일·팩스인 곳만 자동으로 나가요.</span></div>' : '') +
-    (gw ? '' : '<p class="hint" style="margin-top:6px">팩스 자동 전송을 쓰려면 <button type="button" class="linkbtn" id="pdGw">공장 관리 → 팩스 전송 설정</button>을 먼저 해주세요.</p>');
+    (!pd.fac && facs.length > 1 ? '<div class="bar" style="margin-top:8px"><button type="button" class="btn p" id="pdSendAll"' + (auto.length ? '' : ' disabled') + '>기본 방법으로 ' + auto.length + '곳 한 번에 보내기</button><span class="sub">공장마다 그 공장 몫이 표시된 지시서를 따로 보내요. 기본 전송 방법이 이메일인 업체만 자동 발송합니다. 팩스는 직접 전송합니다.</span></div>' : '') +
+    '<p class="hint" style="margin-top:6px">PC 팩스는 밴딩된 PDF를 저장한 후 인터넷팩스 웹사이트에서 직접 첨부·발송합니다. 자동 전송이 아닙니다.</p>';
 }
 $('#pdM').addEventListener('click', function (e) {
   var b, g = curDetail(); if (!g) return;
   if ((b = e.target.closest('[data-fac]')) && b.classList.contains('chip')) { pd.fac = b.getAttribute('data-fac'); return renderDetail(); }
-  if ((b = e.target.closest('[data-send]'))) return sendWo(g, b.getAttribute('data-fac'), b.getAttribute('data-send'), b);
+  if ((b = e.target.closest('[data-send]'))) return b.getAttribute('data-send') === 'fax' ? pcFaxWo(g, b.getAttribute('data-fac'), b) : sendWo(g, b.getAttribute('data-fac'), b.getAttribute('data-send'), b);
   if ((b = e.target.closest('[data-factedit]'))) return openFactories(b.getAttribute('data-factedit'), woFactories(g).filter(function (f) { return f.name === b.getAttribute('data-factedit'); }).map(function (f) { return f.works.join(', '); })[0]);
   if (e.target.closest('#pdSendAll')) return sendAll(g, e.target.closest('#pdSendAll'));
   if (e.target.closest('#pdGw')) return openFactories('', '', true);
@@ -5087,6 +5124,8 @@ $('#pdAll').addEventListener('click', function () {
     .catch(function (e) { toast('작업의뢰서 파일을 만들지 못했습니다. ' + (e && e.message || '')); })
     .then(function () { window._copiesTitle = null; busy(btn, false); });
 });
+$('#pdVendorZip').addEventListener('click',function(){var g=curDetail();if(g)vendorZipWo(g,this);});
+$('#pdPcFax').addEventListener('click',function(){var g=curDetail();if(!g)return;if(!pd.fac)return toast('먼저 상단에서 팩스 수신 업체를 선택해주세요.');pcFaxWo(g,pd.fac,this);});
 $('#pdPng').addEventListener('click', function () {
   var g = curDetail(), btn = this; if (!g) return; busy(btn, true);
   woCanvas(g, pd.fac, pd.client).then(function (cv) { var url = cv.toDataURL('image/png'); cv.toBlob(function (b) { deliver(b, woFileName(g, pd.fac, pd.client, 'png'), 'image', url); busy(btn, false); }, 'image/png'); })
@@ -5143,7 +5182,7 @@ function sendWo(g, fac, method, btn) {
 }
 function sendAll(g, btn) {
   var client = pd ? pd.client : false;
-  var targets = woFactories(g).map(function (x) { var f = factoryBy(x.name), a = sendAvail(f), m = f && f['전송방법']; return { name: x.name, f: f, method: m === '이메일' && a.email ? 'email' : m === '팩스' && a.fax ? 'fax' : '' }; });
+  var targets = woFactories(g).map(function (x) { var f = factoryBy(x.name), a = sendAvail(f), m = f && f['전송방법']; return { name: x.name, f: f, method: m === '이메일' && a.email ? 'email' : false ? 'fax' : '' }; });
   var go = targets.filter(function (t) { return t.method; }), manual = targets.filter(function (t) { return !t.method; });
   if (!go.length) return toast('기본 전송 방법이 이메일·팩스로 정해진 공장이 없어요.');
   if (go.some(function (t) { return t.method === 'fax'; }) && !(S.appSettings || {}).faxGateway && !DEMO) { toast('팩스 전송 설정을 먼저 해주세요.'); return openFactories('', '', true); }
@@ -8228,11 +8267,7 @@ filteredOrders = function () {
 var _renderListR = renderList;
 renderList = function () {
   fillQRep(); _renderListR();
-  $$('#oTable tbody tr[data-id], #oCards .card[data-id]').forEach(function (tr) {
-    var o = orderById(tr.getAttribute('data-id')); if (!o) return; var x = repOf(o); if (!x) return;
-    var cell = tr.matches('tr') ? tr.children[1] : tr.querySelector('.co');
-    if (cell && !cell.querySelector('.rp-pill')) cell.insertAdjacentHTML('beforeend', (tr.matches('tr') ? '<br>' : ' ') + '<span class="rp-pill" title="내부 영업 담당자' + (o['영업담당'] ? '' : ' (거래처 기본)') + '">' + esc(x) + '</span>');
-  });
+  // 총정리 표의 업체명 아래 담당자를 표시하지 않음. 검색·필터는 그대로 유지. 
   var r = $('#qRep') && $('#qRep').value;
   if (r) { var q = $('#qSum'); if (q) q.insertAdjacentHTML('afterbegin', '<span class="rp-pill">' + esc(r === '__none' ? REP_NONE : r) + '</span> '); }
 };
@@ -9725,6 +9760,20 @@ function specOf(g) {
     if (s[k] && typeof s[k] === 'object' && !Array.isArray(s[k]) && d[k] && typeof d[k] === 'object') d[k] = Object.assign({}, d[k], s[k]);
     else d[k] = s[k];
   });
+  // 시트에 저장된 작업사양이 현재 총정리 발주와 어긋난 경우 잘못된 제품명·규격을 인쇄하지 않는다.
+  // 작업 전용 사양은 남겨 검토할 수 있게 하되, 불일치를 표시한다.
+  var orderItem=String((g.main||{})['품목']||'').trim();
+  var orderSize=String((g.main||{})['스펙']||'').trim();
+  d._mismatches=[];
+  if(orderItem && d.제품명 && String(d.제품명).trim()!==orderItem){d._mismatches.push('제품명'); d.제품명=orderItem;}
+  if(orderSize && d.제품규격 && String(d.제품규격).trim()!==orderSize){d._mismatches.push('제품규격'); d.제품규격=orderSize;}
+  if(orderItem && !d.제품명)d.제품명=orderItem;
+  if(orderSize && !d.제품규격)d.제품규격=orderSize;
+  if((g.main||{})['수량']!=='' && (g.main||{})['수량']!=null){
+    var oq=String((g.main||{})['수량']).replace(/,/g,'').trim(), sq=String(d.발주량||'').replace(/,/g,'').trim();
+    if(sq && oq && sq!==oq)d._mismatches.push('발주수량');
+    if(oq)d.발주량=(g.main||{})['수량'];
+  }
   if (!Array.isArray(d.인쇄.색상)) d.인쇄.색상 = [];
   while (d.인쇄.색상.length < 10) d.인쇄.색상.push('');
   if (!Array.isArray(d.인쇄.별색)) d.인쇄.별색 = [];
@@ -9762,6 +9811,8 @@ function ensureSpecImg(g) { return loadSpecImg(specOf(g).도안); }
 /* ---------- 배치: 행마다 칸 (L=제목칸, V=값칸, IMG=도안) ---------- */
 function woModel(g, fac) {
   var sp = specOf(g), R = [], rev = woRev(g);
+  // 공정 작업사양이 다른 제품에서 복사된 것으로 의심되는 경우 인쇄본에 확인 경고를 표시한다.
+  var specWarning = (sp._mismatches||[]).length ? '확인 필요: 저장된 작업사양의 '+sp._mismatches.join('·')+'이 총정리 발주와 달라 발주값을 우선 표시했습니다. 작업사양 검토 후 발송하세요.' : '';
   function L(t, c, r, cls) { return { k: 'L', t: t == null ? '' : String(t), c: c || 1, r: r || 1, cls: cls || '' }; }
   function V(t, c, r, cls) { return { k: 'V', t: t == null ? '' : String(t), c: c || 1, r: r || 1, cls: cls || '' }; }
   function row(h, cells) { R.push({ h: h, cells: cells }); }
@@ -9771,6 +9822,7 @@ function woModel(g, fac) {
   row(26, [L('발 주 일'), V(od[0]), V('년'), V(+od[1]), V('월'), V(+od[2]), V('일'), L('제품명', 1, 2), V(sp.제품명, 4, 2, 'lab b big wrap')]);
   row(26, [L('납 기 일'), V(sp.납기, 6)]);
   row(26, [L('제품규격'), V(sp.제품규격, 6), L('발주량'), V(fmtNum(sp.발주량)), V(sp.발주량 === '' ? '' : sp.발주단위), V(fmtNum(sp.미터)), V(sp.미터 === '' ? '' : sp.미터단위)]);
+  if(specWarning)row(42,[L('사양 확인',1,2,'redlab'),V(specWarning,11,2,'left red wrap')]);
   gap();
   // 원단
   var mats = (sp.원단 || []).slice(), matMine = mats.some(function (m) { return mine(m.발주처); }) ? ' mine' : '';
@@ -9823,14 +9875,6 @@ function woModel(g, fac) {
     row(30, [L('슬리터', 1, 1, tm), L('규 격', 1, 2), V(T.폭, 1, 1, 'b big'), V(T.폭 === '' ? '' : (T.폭단위 || 'mm')), V(fmtNum(T.길이), 1, 1, 'b big'), V(T.길이 === '' ? '' : (T.길이단위 || 'm')), V(fmtNum(T.수량)), V(T.수량 === '' ? '' : (T.단위 || '롤')), L('방 향', 2, 2), V(T.방향, 2, 2, 'b big')]);
     row(30, [L(T.업체 || '', 1, 1, 'vend' + tm), V(T.비고, 6, 1, T.비고 ? 'yel b big' : '')]);
   }
-  // 공정별 매입 원본 행: 누락 없이 지시서에 보존 (공정/업체/규격/수량/단가/금액)
-  var purchases=woPurchaseProcesses(g);
-  if(purchases.length){
-    gap();
-    row(26,[L('공정별 매입 상세',12,1,'b')]);
-    row(23,[L('공정',2),L('매입업체',2),L('규격·작업내용',5),L('수량'),L('단가'),L('금액')]);
-    purchases.forEach(function(x){row(24,[V(x.kind,2,1,'b'),V(x.vendor,2,1,mine(x.vendor)),V(x.detail+(x.memo?' / '+x.memo:''),5,1,'left wrap'),V(fmtNum(x.qty)),V(fmtNum(x.unit)),V(fmtNum(x.amount))]);});
-  }
   // 일정 변경 (Rev)
   if (rev) {
     var chg = g.hist.filter(function (h) { return h['구분'] === '일정 변경' || h['구분'] === '공정 삭제'; }).slice().sort(function (a, b) { return String(b['일시']).localeCompare(String(a['일시'])); }).slice(0, 6);
@@ -9841,6 +9885,15 @@ function woModel(g, fac) {
   }
   gap();
   R.push({ h: 330, cells: [L('도 안'), { k: 'IMG', c: 11, r: 1, src: specImgSrc(sp), cls: '' }] });
+  // 외부 업체용: 비수신 업체명은 출력 데이터 자체에서 제거하고 회색 밴딩 셀로 대체.
+  // 내부 전체 공정 보기(fac='')에는 원본을 그대로 표시한다.
+  if (fac) {
+    var otherNames = woFactories(g).map(function(x){return String(x.name||'').trim();})
+      .filter(function(name){return name && name !== String(fac).trim();});
+    R.forEach(function(rr){(rr.cells||[]).forEach(function(c){
+      if(c.k !== 'IMG' && otherNames.indexOf(String(c.t||'').trim()) !== -1){c.t=''; c.cls=(c.cls||'')+' lison-band';}
+    });});
+  }
   return { rows: R, sp: sp, rev: rev };
 }
 
@@ -9850,6 +9903,7 @@ function woHtml(g, fac, client, docId) {
   function cell(c) {
     var cls = (c.k === 'L' ? 'lab ' : '') + (c.cls || '');
     var attr = (c.c > 1 ? ' colspan="' + c.c + '"' : '') + (c.r > 1 ? ' rowspan="' + c.r + '"' : '') + (cls.trim() ? ' class="' + cls.trim() + '"' : '');
+    if (/\blison-band\b/.test(cls)) return '<td' + attr + '><span style="display:block;width:85%;height:13px;margin:auto;background:#a9afb7;border-radius:1px"></span></td>';
     if (c.k === 'IMG') return '<td' + attr + ' class="img">' + (c.src ? '<img alt="도안" src="' + c.src + '">' : '<div class="noimg">' + (specOf(g).도안 ? '도안 이미지를 불러오는 중…' : '작업 사양 입력에서 도안 이미지를 넣으면 여기에 나와요') + '</div>') + '</td>';
     if (/\bwrap\b/.test(c.cls)) return '<td' + attr + '><div class="w">' + esc(c.t).replace(/\n/g, '<br>') + '</div></td>';
     return '<td' + attr + '><span class="c">' + esc(c.t) + '</span></td>';
@@ -9895,12 +9949,13 @@ function woXlsx(g, fac) {
         for (var rr = r; rr <= r2; rr++) for (var cc = col; cc <= c2; cc++) occ[rr + ':' + cc] = 1;
         if (c.c > 1 || c.r > 1) ws.mergeCells(r, col, r2, c2);
         var x = ws.getCell(r, col), cls = ' ' + (c.cls || '') + ' ';
-        if (c.k === 'IMG') { imgAt = { r: r, c: col, c2: c2, h: row.h, src: c.src }; x.value = c.src ? '' : '도안 없음'; }
+        if (/ lison-band /.test(cls)) { x.value = ''; x.fill = FILL('FFA9AFB7'); }
+        else if (c.k === 'IMG') { imgAt = { r: r, c: col, c2: c2, h: row.h, src: c.src }; x.value = c.src ? '' : '도안 없음'; }
         else { var num = String(c.t).replace(/,/g, ''); x.value = /^\d{4,}$/.test(num) && /,/.test(c.t) ? Number(num) : c.t; if (typeof x.value === 'number') x.numFmt = '#,##0'; }
         x.font = { name: '맑은 고딕', size: / big /.test(cls) ? 12 : 10, bold: c.k === 'L' || / b /.test(cls), color: { argb: / red /.test(cls) || / redlab /.test(cls) ? 'FFC4302B' : 'FF111111' } };
         x.alignment = { horizontal: / left /.test(cls) ? 'left' : 'center', vertical: 'middle', wrapText: true };
         var fill = / yel /.test(cls) ? 'FFFFFF00' : / mine /.test(cls) ? 'FFFFE08A' : (c.k === 'L' || / lab /.test(cls)) ? 'FFDDEBF7' : null;
-        for (var rr2 = r; rr2 <= r2; rr2++) for (var cc2 = col; cc2 <= c2; cc2++) { var y = ws.getRow(rr2).getCell(cc2); y.border = BOX; if (fill) y.fill = FILL(fill); }
+        for (var rr2 = r; rr2 <= r2; rr2++) for (var cc2 = col; cc2 <= c2; cc2++) { var y = ws.getRow(rr2).getCell(cc2); y.border = BOX; if (fill && !/ lison-band /.test(cls)) y.fill = FILL(fill); }
         col = c2 + 1;
       });
       r++;
