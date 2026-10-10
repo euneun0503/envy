@@ -320,7 +320,7 @@
 </head><body>
 <title>리손패키지 거래처 관리 ERP</title>
 <meta name="robots" content="noindex,nofollow">
-<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbw9DyL1L7OfSSoj7_pxQ5Ers1y-1XEZohElms7IFzgrCL4W8FuiEmkQjiT5LvNwSrd0/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
+<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbyl1FmRWiIOS9pFKWDgIsk1IaoTJT1F0jj8lXM43ef6N0Jb5zBZu5BgYIy0Gs2nHiyk/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1357,7 +1357,7 @@ function themeFromHex(hex) {
         </div>
         <div class="order-plate-panel" id="orderPlatePanel">
           <div class="order-plate-head"><strong>동판 제작·연결</strong><span id="orderPlateStatus" class="sub">동판 제작 방식 선택</span></div>
-          <label class="f" style="margin:9px 0 5px;max-width:330px"><span>동판 처리 방식</span><select id="orderPlateChoice" class="inp"><option value="new">신규 동판 제작 (발주 저장 시 제작 대기 등록)</option><option value="existing">기존 동판 사용</option><option value="none">동판 제작 없음</option></select></label>
+          <label class="f" style="margin:9px 0 5px;max-width:330px"><span>동판 처리 방식</span><select id="orderPlateChoice" class="inp"><option value="" selected>동판 처리 방식을 선택하세요</option><option value="new">신규 동판 제작 (발주 저장 시 제작 대기 등록)</option><option value="existing">기존 동판 사용</option><option value="none">동판 제작 없음</option></select></label>
           <p class="sub" id="orderPlateNewNote" style="margin:4px 0 8px">새 발주 저장 시 현재 품목을 동판관리의 ‘제작 대기’ 상태로 1회 등록합니다. 제작 완료 후 상세정보를 보완하세요.</p>
           <div class="order-plate-actions"><button type="button" class="btn sm" id="orderPlateSearchBtn">기존 동판 검색·연결</button><button type="button" class="btn sm" id="orderPlateClearBtn" hidden>선택 해제</button></div>
           <div class="order-plate-result" id="orderPlateResult" hidden></div>
@@ -3230,6 +3230,8 @@ function resetOrder(keep) {
   autoFor = ''; autoFilled = null; buyAuto = false; bpAuto = false; if ($('#oAuto')) $('#oAuto').hidden = true;
   updateCalc(); if (typeof renderCart === 'function') renderCart();
   if(window.orderPlateUI)window.orderPlateUI.clear();
+  var plateChoiceEl=document.getElementById('orderPlateChoice');
+  if(plateChoiceEl)plateChoiceEl.value='';
 }
 function editOrder(o, asCopy) {
   resetOrder(false);
@@ -3331,11 +3333,14 @@ function saveNew() {
   if(abnormal.length&&!confirm('비정상적으로 큰 매입금액이 있습니다.\n'+abnormal.map(function(x){return (x['매입처']||'매입처 미지정')+': '+won(x['매입금액'])+'원';}).join('\n')+'\n수량·단가 단위가 맞는지 확인하셨습니까?'))return;
   var head = { co: lines[0]['업체명'], order: lines[0]['발주일'] };
   $('#oSave').disabled = $('#oSaveNext').disabled = true;
-  var plateRequest=window.orderPlateUI&&window.orderPlateUI.request?window.orderPlateUI.request():{choice:'none',link:null};
+  var plateRequest=window.orderPlateUI&&window.orderPlateUI.request?window.orderPlateUI.request():{choice:'',link:null};
+  if(!plateRequest.choice){$('#oSave').disabled=$('#oSaveNext').disabled=false;toast('동판 처리 방식(신규 제작 / 기존판 / 제작 없음)을 선택해야 발주를 저장할 수 있습니다.');document.getElementById('orderPlateChoice').focus();return;}
   var importSpec=lisonPendingWork&&lisonPendingWork.co===head.co&&lisonPendingWork.order===head.order?lisonPendingWork:null;
   var p=api('commitOrder',{orders:lines,plate:plateRequest,workSpec:importSpec});
   p.then(function(result){
-    if(!result||!result.ids||result.ids.length!==lines.length)throw new Error('주문 저장 결과의 행 수가 일치하지 않습니다.');
+    if(!result||!result.committed||!result.ids||result.ids.length!==lines.length||!result.batchId||!result.enteredAt)throw new Error('발주 서버 저장 결과를 확인하지 못했습니다.');
+    if(plateRequest.choice==='new'&&(!Array.isArray(result.plates)||!result.plates.length||result.plates.some(function(x){return !x.plateId;})))throw new Error('발주는 저장되었으나 신규 동판 등록 확인이 필요합니다. 주문을 중복 저장하지 말고 동판 관리를 확인하세요.');
+    if(plateRequest.choice==='existing'&&(!Array.isArray(result.plates)||!result.plates.length||!result.plates[0].plateRef))throw new Error('발주는 저장되었으나 기존 동판 연결 확인이 필요합니다. 중복 저장하지 말고 동판 관리를 확인하세요.');
     return result;
   }).then(function () {
     alert('발주 등록 완료\n거래처: '+head.co+'\n발주일: '+head.order+'\n저장된 품목·매입 줄: '+lines.length+'개\n서버 저장이 완료되었습니다.');
@@ -4019,21 +4024,52 @@ $('#sXlsx').addEventListener('click', function () { stmtXLSX(this); });
 /* 리손: 같은 거래처·같은 발주일이라도 품목이 다르면 따로 생산(작업의뢰서도 따로).
    매출이 없는 부속 줄(택배비·동판비 등)은 그날 매출이 가장 큰 품목 묶음에 붙임 */
 var _gkSrc = null, _gkMap = null;
+function lisonPlateLineName(v) {
+  return /동판|제판|판비|판제작|판수정|판재제작|기존판.*재사용|색판.*수정/i.test(String(v || '')) && !/^\[(클레임|재납품)/.test(String(v || ''));
+}
 function gkMap() {
   if (_gkSrc === S.orders && _gkMap) return _gkMap;
   _gkSrc = S.orders; _gkMap = {};
-  var by = {};
-  S.orders.forEach(function (o) { if (!o['업체명'] || !o['발주일']) return; var b = o['업체명'] + '|' + o['발주일']; (by[b] = by[b] || []).push(o); });
-  Object.keys(by).forEach(function (b) {
-    var pks = {}; by[b].forEach(function (o) { var q = pkOf(o); (pks[q] = pks[q] || []).push(o); });
-    var names = Object.keys(pks), plateName = function(q){return /동판|제판|판비|판제작|판수정|동판비/i.test(q) && !/^[\[]?(클레임|재납품)/.test(q);};
-    var sold = names.filter(function (q) { return !/^\[클레임/.test(q) && !plateName(q) && pks[q].some(isSale); });
-    var host = sortBy(sold, function (q) { return pks[q].reduce(function (s, o) { return s + supply(o); }, 0); }).pop();
-    names.forEach(function (q) {
-      var attached = plateName(q) && sold.length === 1 ? sold[0] : q;
-      var linked = !plateName(q) && !/^\[(클레임|재납품)/.test(q) && sold.indexOf(q) < 0 && host ? host : attached;
-      var k = b + '|' + linked;
-      pks[q].forEach(function (o) { _gkMap[o.ID || ('r' + o._row)] = k; });
+  var batches = {}, legacy = {};
+  (S.orders || []).forEach(function(o){
+    if(!o['업체명']||!o['발주일'])return;
+    var prefix=String(o['업체명'])+'|'+String(o['발주일']);
+    var token=String(o['발주묶음ID']||'').trim();
+    if(token)(batches[prefix+'|'+token]=batches[prefix+'|'+token]||[]).push(o);
+    else (legacy[prefix]=legacy[prefix]||[]).push(o);
+  });
+  function set(o,key){_gkMap[o.ID||('r'+o._row)]=key;}
+  Object.keys(batches).forEach(function(b){
+    var rows=batches[b], mains=[];
+    rows.forEach(function(o){if(!lisonPlateLineName(pkOf(o))&&mains.indexOf(pkOf(o))<0)mains.push(pkOf(o));});
+    rows.forEach(function(o){
+      var name=pkOf(o);
+      if(lisonPlateLineName(name)&&mains.length===1)name=mains[0];
+      set(o,b+'|'+name);
+    });
+  });
+  // 입력시각이 없는 과거 자료는 시트에 없는 시간을 만들어내지 않습니다.
+  // 같은 날짜·제품명도 별도의 매출 기준행에서 새 주문을 시작하여 분리합니다.
+  // 공정/동판 비용만 있는 줄은 바로 이어진 제품 행으로 제한적으로 연결합니다.
+  Object.keys(legacy).forEach(function(b){
+    var rows=legacy[b].slice().sort(function(a,c){return (+a._row||0)-(+c._row||0);});
+    var current=null,lastByItem={};
+    rows.forEach(function(o){
+      var item=pkOf(o),plate=lisonPlateLineName(item);
+      var actualSale=isSale(o)||String(o['수량']||'').trim()!=='';
+      var isMain=actualSale&&!plate;
+      if(isMain){
+        current={item:item,row:+o._row||0,key:b+'|legacy:'+String(o.ID||o._row)+'|'+item};
+        lastByItem[item]=current;
+        set(o,current.key);
+        return;
+      }
+      var source=!plate?lastByItem[item]:null;
+      // 이전 발주 제품과 잘못 붙이지 않도록, 가까운 인접 원장 행만 허용.
+      if(!source&&current&&(+o._row||0)-current.row<=12&&(plate||item===current.item))source=current;
+      if(source){set(o,source.key);return;}
+      // 정보가 부족한 구 주문: 결합하지 않고 독립 표시 (실제 발주 입력시각은 복구 불가)
+      set(o,b+'|legacy:'+String(o.ID||o._row)+'|'+item);
     });
   });
   return _gkMap;
@@ -4182,7 +4218,7 @@ function prodGroupsCalc(raw) {
   S.orders.forEach(function (o) {
     if (!o['발주일'] || !o['업체명']) return;
     if (/^\[클레임/.test(o['품목'] || '')) return;
-    var k = groupKey(o); if (!map[k]) { map[k] = { key: k, co: o['업체명'], order: o['발주일'], pk: k.split('|').slice(2).join('|'), rows: [] }; list.push(map[k]); }
+    var k = groupKey(o); if (!map[k]) { map[k] = { key: k, co: o['업체명'], order: o['발주일'], pk: k.split('|').slice(3).join('|') || pkOf(o), rows: [] }; list.push(map[k]); }
     map[k].rows.push(o);
   });
   var LT = raw ? null : leadTimes(), cfg = prodCfg();
@@ -7858,6 +7894,7 @@ $('#clM').addEventListener('click', function (e) {
   clSync();
 });
 $('#clSave').addEventListener('click', function () {
+  var btn = this; if (btn.disabled) return;
   var e = clFromForm();
   if (!e['업체명']) return toast('매출거래처를 고르세요.');
   if (!e['품목']) return toast('품목을 넣어주세요.');
@@ -7865,7 +7902,12 @@ $('#clSave').addEventListener('click', function () {
   if (e['매출조정'] && !(n(e['매출조정액']) > 0)) return toast('매출 차감 금액(공급가)을 넣어주세요.');
   if (e['매입조치'] === '청구' && (!e['책임처'] || !(n(e['청구액']) > 0))) return toast('청구할 공장과 금액을 넣어주세요.');
   var c = {}; CL_KEYS.forEach(function (k) { c[k] = e[k] == null ? '' : e[k]; }); if (e.ID) c.ID = e.ID;
-  api('saveClaim', { claim: c }).then(function () { closeM('clM'); toast('클레임을 저장했어요. 총정리·원장·공장 정산·간편장부에 반영됐어요.'); renderClaims(); }).catch(function () {});
+  busy(btn, true);
+  api('saveClaim', { claim: c }, {wait:true}).then(function (r) {
+    if (!r || !r.id) throw new Error('저장된 클레임 ID를 확인할 수 없습니다.');
+    closeM('clM'); toast(r.deduped ? '동일 클레임이 이미 있어 기존 건을 표시합니다.' : '클레임을 저장했습니다.');
+    renderClaims();
+  }).catch(function (er) { toast('클레임 저장 실패: ' + (er.message || er)); }).then(function(){busy(btn,false);});
 });
 $('#clDel').addEventListener('click', function () {
   var id = clEdit && clEdit.ID; if (!id) return;
@@ -9211,14 +9253,26 @@ window.addEventListener('resize', function () { if (!$('#crM').hidden && !CR.sca
 $('#crEdit').addEventListener('click', function () { $('#crEditBox').hidden = !$('#crEditBox').hidden; if (!$('#crEditBox').hidden) $('#cr_원인분석').focus(); });
 $('#crEditCancel').addEventListener('click', function () { $('#crEditBox').hidden = true; });
 $('#crEditSave').addEventListener('click', function () {
-  var c = crCur(); if (!c) return;
-  var x = {}; CL_KEYS.forEach(function (k) { x[k] = c[k] == null ? '' : c[k]; }); x.ID = c.ID;
+  var c = crCur(); if (!c || !c.ID) return toast('수정할 클레임 ID를 찾을 수 없습니다.');
+  var btn = this;
+  if (btn.disabled) return;
+  var x = Object.assign({}, c);
   ['원인분석', '재발방지', '작성자', '검토자'].forEach(function (k) { x[k] = $('#cr_' + k).value.trim(); });
-  var id = c.ID, ids = CR.list.map(function (y) { return y.ID; });
-  api('saveClaim', { claim: x }).then(function () {
-    CR.list = ids.map(function (i) { return (S.claims || []).filter(function (y) { return y.ID === i; })[0]; }).filter(Boolean);
-    CR.i = Math.max(0, ids.indexOf(id)); $('#crEditBox').hidden = true; crRender(); toast('보고서 내용을 저장했어요.');
-  }).catch(function () {});
+  var id = String(c.ID), ids = CR.list.map(function (y) { return String(y.ID); });
+  busy(btn, true);
+  api('saveClaim', { claim: x }, {wait:true}).then(function (result) {
+    if (result && result.id && String(result.id) !== id) throw new Error('다른 클레임 ID로 저장되었습니다. 보고서를 확인해주세요.');
+    return api('load', {}, {wait:true});
+  }).then(function () {
+    CR.list = ids.map(function (i) { return (S.claims || []).find(function (y) { return String(y.ID) === i; }); }).filter(Boolean);
+    CR.i = Math.max(0, CR.list.findIndex(function (y) { return String(y.ID) === id; }));
+    var updated = CR.list[CR.i];
+    if (!updated || ['원인분석','재발방지','작성자','검토자'].some(function(k){return String(updated[k] || '') !== String(x[k] || '');})) {
+      throw new Error('시트 저장 내용이 일치하지 않습니다. 새로고침하여 확인해주세요.');
+    }
+    $('#crEditBox').hidden = true; crRender(); toast('보고서 원인·대책·결재 내용이 반영됐습니다.');
+  }).catch(function (er) { toast('보고서 저장 확인 실패: ' + (er.message || er)); })
+    .then(function(){busy(btn,false);});
 });
 /* ---- 받기 · 인쇄 ---- */
 function crName(c, ext, mode) { return ((mode || CR.mode) === 'cust' ? '품질클레임회신_' : '클레임보고서_') + crNo(c) + '_' + String(c['업체명'] || '').replace(/[\\/:*?"<>|\s]+/g, '') + '.' + ext; }
@@ -11153,6 +11207,13 @@ var Mock = (function () {
     saveClaim: function (r) {
       D.claims = D.claims || [];
       var c = r.claim || {}, x = c.ID ? find(D.claims, 'ID', c.ID) : null, isNew = !x;
+      if (c.ID && !x) throw new Error('존재하지 않는 클레임 ID입니다. 새 항목을 만들지 않습니다.');
+      if (!c.ID) {
+        var fields = ['업체명','원줄ID','품목','접수일','불량내용','불량수량','매출조정','매출조정액','재납품','재납품수량','매입조치','청구액'];
+        var normalized = function (o,k) {var v=o[k];return k==='재납품'?(v===true||v==='true'||v==='TRUE'?'1':'0'):String(v==null?'':v).trim();};
+        var match = D.claims.filter(function (y) {return fields.every(function(k){return normalized(y,k)===normalized(c,k);});})[0];
+        if (match) return {id:match.ID,deduped:true};
+      }
       if (!c['업체명']) throw new Error('매출거래처를 고르세요.');
       if (!c['품목']) throw new Error('품목을 넣어주세요.');
       if (!x) { x = { ID: id('Q'), '등록일시': nowStr() }; D.claims.push(x); }
@@ -11868,7 +11929,7 @@ document.addEventListener('input',function(ev){if(ev.target.id!=='plateCandidate
  var selected=null, aliases={}, allSources=false;
  var modes=['기존판 재사용 검토','공용 색판 일부 활용','기존판 사용 확정'];
  function choice(){return document.getElementById('orderPlateChoice').value;}
- function choiceSync(){var v=choice();document.getElementById('orderPlateSearchBtn').hidden=v!=='existing';document.getElementById('orderPlateClearBtn').hidden=v!=='existing'||!selected;document.getElementById('orderPlateNewNote').hidden=v!=='new';document.getElementById('orderPlateResult').hidden=v!=='existing'||!selected;var z=document.getElementById('orderPlateStatus');if(v==='new')z.textContent='신규 제작 · 제작 대기 자동 등록';else if(v==='none')z.textContent='동판 제작 없음';else if(!selected)z.textContent='기존판 미선택';}
+ function choiceSync(){var v=choice();if(!v)document.getElementById('orderPlateStatus').textContent='동판 처리 방식 선택 필요';document.getElementById('orderPlateSearchBtn').hidden=v!=='existing';document.getElementById('orderPlateClearBtn').hidden=v!=='existing'||!selected;document.getElementById('orderPlateNewNote').hidden=v!=='new';document.getElementById('orderPlateResult').hidden=v!=='existing'||!selected;var z=document.getElementById('orderPlateStatus');if(v==='new')z.textContent='신규 제작 · 제작 대기 자동 등록';else if(v==='none')z.textContent='동판 제작 없음';else if(!selected)z.textContent='기존판 미선택';}
  document.getElementById('orderPlateChoice').addEventListener('change',function(){if(choice()!=='existing')selected=null;update();});
 
  function esc0(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
