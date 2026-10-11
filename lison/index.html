@@ -149,6 +149,16 @@
 .order-peek-sheet{width:min(980px,calc(100vw - 30px))!important;max-width:980px!important}
 @media(max-width:650px){.order-peek-grid-table{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .lison-plate-sub{margin-top:3px;color:#7d8792;font-size:11px;font-weight:500;line-height:1.5}
+
+/* 작업의뢰서 버튼 높이와 글꼴 통일 */
+#pdM .actions .btn,#pdM .bar .btn,#pdM .sr-btns .btn,#pdM #pdReconcile{min-height:34px;font-size:12px;font-weight:650;line-height:1.25;padding:7px 11px;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
+.lison-compare-overlay{position:fixed;inset:0;background:rgba(19,31,44,.42);z-index:30000;display:flex;align-items:center;justify-content:center;padding:22px}
+.lison-compare-dialog{width:min(960px,100%);max-height:92vh;overflow:hidden;background:#fff;border-radius:12px;box-shadow:0 18px 65px rgba(0,0,0,.23);display:flex;flex-direction:column;color:#172430}
+.lison-compare-dialog header,.lison-compare-dialog footer{padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.lison-compare-dialog header{border-bottom:1px solid #e0e5eb}.lison-compare-dialog footer{border-top:1px solid #e0e5eb}.lison-compare-dialog h2{margin:0;font-size:21px}.lison-compare-dialog header p,.lison-compare-dialog footer span{color:#697783;font-size:12px;margin:7px 0 0}
+.lison-compare-actions,.lison-book-search{display:flex;gap:9px;align-items:center;padding:12px 24px}.lison-book-search .inp{flex:1}
+.lison-compare-scroll{overflow:auto;padding:4px 24px 20px}.lison-compare-dialog table{width:100%;border-collapse:collapse;font-size:12px}.lison-compare-dialog th,.lison-compare-dialog td{border:1px solid #dce3ea;padding:11px 12px;text-align:left}.lison-compare-dialog thead th{background:#edf2f7}.lison-compare-dialog td:nth-child(2){background:#fff5f4}.lison-compare-dialog td:nth-child(3){background:#f0f6ff}.lison-compare-dialog td label{white-space:nowrap;margin-right:9px}
+.lison-library{width:min(1070px,100%)}.lison-library tbody tr:hover{background:#f4f9fa}.lison-library td:nth-child(2),.lison-library td:nth-child(3){background:transparent}
 </style>
 
 
@@ -320,7 +330,7 @@
 </head><body>
 <title>리손패키지 거래처 관리 ERP</title>
 <meta name="robots" content="noindex,nofollow">
-<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbyl1FmRWiIOS9pFKWDgIsk1IaoTJT1F0jj8lXM43ef6N0Jb5zBZu5BgYIy0Gs2nHiyk/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
+<script>/* 웹 앱 주소 미리 넣기: 새 기본 주소가 올라오면 한 번 덮어씀 */try{var LU='https://script.google.com/macros/s/AKfycbxpIK4uQIElP35hBcCF3xmeb-3vXky_teUCXCucKItPJ1I2ZVY8M2wKDIyxi4_MREbD/exec';if(localStorage.getItem('lison_url_def')!==LU){localStorage.setItem('lison_url',LU);localStorage.setItem('lison_url_def',LU);}}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -5104,6 +5114,8 @@ function renderDetail() {
   }).join('') + (facs.length ? '' : '<span class="sub">작업 사양이나 일정 수정에서 원단 발주처·인쇄·합지·가공 업체를 넣으면 공장별로 보낼 수 있어요.</span>');
   $('#pd_client').checked = !!pd.client; $('#pdAttach').value = woAttach();
   $('#pdSpec').textContent = specRowOf(g.co, g.order, g.pk) ? '작업 사양 수정' : '작업 사양 입력';
+  var oldReconcile=document.getElementById('pdReconcile');if(oldReconcile)oldReconcile.remove();
+  $('#pdSpec').insertAdjacentHTML('afterend',specChoiceHtml(g));
   ensureSpecImg(g);
   $('#wo').innerHTML = woHtml(g, pd.fac, pd.client, 'woDoc');
   layoutPaper();
@@ -5241,6 +5253,7 @@ $('#pdM').addEventListener('click', function (e) {
 });
 $('#pd_client').addEventListener('change', function () { pd.client = this.checked; renderDetail(); });
 $('#pdSpec').addEventListener('click', function () { var g = curDetail(); if (g) openSpec(g); });
+$('#pdM').addEventListener('click',function(e){if(e.target.closest('#pdReconcile')){var g=curDetail();if(g)openSpecReconcile(g);}});
 $('#pdFinalArtwork').addEventListener('click',function(){var g=curDetail();if(!g)return;openSpec(g);setTimeout(function(){var f=$('#spFile');if(f){var box=f.closest('.sp-sec');if(box)box.scrollIntoView({block:'center'});}},80);});
 $('#pdXlsx').addEventListener('click', function () {
   var g = curDetail(), btn = this; if (!g) return; busy(btn, true);
@@ -9385,7 +9398,17 @@ $('#clList').addEventListener('click', function (e) {
   if (bc) openClaimReport(bc.getAttribute('data-crcid'), crVisible(), 'cust'); else openClaimReport(b.getAttribute('data-crid'), crVisible());
 }, true);
 $('#clXlsx').insertAdjacentHTML('beforebegin', '<button type="button" class="btn" id="crBook">📚 보고서함</button><button type="button" class="btn" id="crAllPdf">내부 보고서 모아 PDF</button><button type="button" class="btn cr-cust" id="crAllCust">매출처 보고서 모아 PDF</button>');
-$('#crBook').addEventListener('click', function () { var L = crVisible(); if (!L.length) return toast('보여줄 클레임이 없어요. 위 상태를 「전체」로 바꿔 보세요.'); openClaimReport(L[0].ID, L); });
+function openClaimReportLibrary(){
+  var items=crAll().slice().reverse(),existing=document.getElementById('lisonCrLibrary');if(existing)existing.remove();
+  var layer=document.createElement('div');layer.id='lisonCrLibrary';layer.className='lison-compare-overlay';
+  layer.innerHTML='<div class="lison-compare-dialog lison-library" role="dialog" aria-modal="true" aria-label="클레임 보고서함"><header><div><h2>클레임 보고서함</h2><p>보고서 목록에서 선택하면 상세 보고서가 열립니다.</p></div><button type="button" class="btn sm" data-book-close>×</button></header><div class="lison-book-search"><input class="inp" id="lisonBookSearch" placeholder="거래처 · 제품명 · 클레임번호 검색"><span id="lisonBookCount"></span></div><div class="lison-compare-scroll"><table><thead><tr><th>번호</th><th>접수일</th><th>업체명</th><th>제품명</th><th>상태</th><th></th></tr></thead><tbody id="lisonBookRows"></tbody></table></div><footer><span>목록에서 보고서 상세 열기</span><button type="button" class="btn" data-book-close>닫기</button></footer></div>';
+  document.body.appendChild(layer);
+  function draw(){var q=layer.querySelector('#lisonBookSearch').value.toLowerCase().trim();var selected=items.filter(function(c){return [crNo(c),c['업체명'],c['품목'],c['불량내용']].join(' ').toLowerCase().indexOf(q)>=0;});layer.querySelector('#lisonBookCount').textContent=selected.length+'건';layer.querySelector('#lisonBookRows').innerHTML=selected.length?selected.map(function(c){return '<tr><td>'+esc(crNo(c))+'</td><td>'+esc(dShort(c['접수일']))+'</td><td>'+esc(c['업체명'])+'</td><td>'+esc(c['품목'])+'</td><td>'+esc(c['상태']||'접수')+'</td><td><button class="btn sm p" data-book-id="'+esc(c.ID)+'">상세보기</button></td></tr>';}).join(''):'<tr><td colspan="6" class="empty">검색 결과가 없습니다.</td></tr>';}
+  layer.querySelector('#lisonBookSearch').addEventListener('input',draw);
+  layer.addEventListener('click',function(e){if(e.target.closest('[data-book-close]'))return layer.remove();var b=e.target.closest('[data-book-id]');if(!b)return;var id=b.getAttribute('data-book-id');layer.remove();openClaimReport(id,items,'in');});
+  draw();
+}
+$('#crBook').addEventListener('click',openClaimReportLibrary);
 $('#crAllCust').addEventListener('click', function () {
   var L = crVisible(), b = this; if (!L.length) return toast('받을 클레임이 없어요.');
   busy(b, true); toast(L.length + '건 매출처 보고서를 한 PDF로 만드는 중…');
@@ -9903,6 +9926,47 @@ function specDefaults(g) {
     도안: ''
   };
 }
+function specDiffs(g, sp) {
+  var main = g.main || {}, list = [], candidates = [
+    {path:'제품명', label:'제품명', a:sp.제품명, b:main['품목']},
+    {path:'제품규격', label:'제품규격', a:sp.제품규격, b:main['스펙']},
+    {path:'발주량', label:'발주수량', a:sp.발주량, b:main['수량']},
+    {path:'납기', label:'납기일', a:sp.납기, b:g.due ? mmdd(g.due) : ''}
+  ];
+  candidates.forEach(function(x) {
+    var a=String(x.a == null?'':x.a).trim(), b=String(x.b == null?'':x.b).trim();
+    if(a && b && a.replace(/[,\s]/g,'')!==b.replace(/[,\s]/g,'')) list.push({path:x.path,label:x.label,a:a,b:b});
+  });
+  return list;
+}
+function specChoiceHtml(g){
+  var sr=specRowOf(g.co,g.order,g.pk);if(!sr)return '';
+  var diffs=specDiffs(g,specParse(sr));
+  return diffs.length? '<button type="button" class="btn sm p" id="pdReconcile">사양 통합 확인 ('+diffs.length+')</button>': '';
+}
+function openSpecReconcile(g){
+  var raw=specRowOf(g.co,g.order,g.pk);if(!raw)return toast('저장된 작업사양이 없습니다.');
+  var differences=specDiffs(g,specParse(raw));
+  if(!differences.length)return toast('작업사양과 총정리 기본값이 일치합니다.');
+  var id='lisonSpecCompare',old=document.getElementById(id);if(old)old.remove();
+  var cover=document.createElement('div');cover.id=id;cover.className='lison-compare-overlay';
+  cover.innerHTML='<div class="lison-compare-dialog" role="dialog" aria-modal="true" aria-label="사양 통합 확인">'+
+   '<header><div><h2>사양 통합 확인</h2><p>저장된 작업사양을 우선 표시합니다. 서로 다른 항목만 직접 선택해 저장하세요.</p></div><button type="button" class="btn sm" data-sc-close>×</button></header>'+
+   '<div class="lison-compare-actions"><button type="button" class="btn sm" data-sc-all="spec">작업사양값 전체 선택</button><button type="button" class="btn sm" data-sc-all="main">총정리값 전체 선택</button></div>'+
+   '<div class="lison-compare-scroll"><table><thead><tr><th>항목</th><th>작업사양값 (입력한 값)</th><th>총정리값</th><th>최종 선택</th></tr></thead><tbody>'+differences.map(function(x,i){return '<tr><th>'+esc(x.label)+'</th><td>'+esc(x.a)+'</td><td>'+esc(x.b)+'</td><td><label><input type="radio" name="sc'+i+'" value="spec" checked> 사양</label><label><input type="radio" name="sc'+i+'" value="main"> 총정리</label></td></tr>';}).join('')+'</tbody></table></div>'+
+   '<footer><span>선택 전에는 원본 값이 변경되지 않습니다.</span><button type="button" class="btn" data-sc-close>닫기</button><button type="button" class="btn p" id="lisonApplySpec">최종 적용·저장</button></footer></div>';
+  document.body.appendChild(cover);
+  cover.querySelectorAll('[data-sc-close]').forEach(function(b){b.addEventListener('click',function(){cover.remove();});});
+  cover.querySelectorAll('[data-sc-all]').forEach(function(b){b.addEventListener('click',function(){var v=b.getAttribute('data-sc-all');differences.forEach(function(_,i){var el=cover.querySelector('input[name="sc'+i+'"][value="'+v+'"]');if(el)el.checked=true;});});});
+  cover.querySelector('#lisonApplySpec').addEventListener('click',function(){
+    var btn=this;if(btn.disabled)return;var spec=specParse(raw);
+    differences.forEach(function(x,i){var picked=cover.querySelector('input[name="sc'+i+'"]:checked');if(picked&&picked.value==='main')spec[x.path]=x.b;});
+    var json=JSON.stringify(spec);
+    if(json.length>45000)return toast('작업 사양 내용이 너무 길어요.');
+    busy(btn,true);
+    api('saveSpec',{co:g.co,order:g.order,item:g.pk,spec:json},{wait:true}).then(function(){cover.remove();renderDetail();toast('선택한 값으로 작업사양을 저장했습니다.');}).catch(function(e){toast('사양 통합 저장 실패: '+(e.message||e));}).then(function(){busy(btn,false);});
+  });
+}
 function specOf(g) {
   var d = specDefaults(g), row = specRowOf(g.co, g.order, g.pk);
   if (!row) return d;
@@ -9911,20 +9975,8 @@ function specOf(g) {
     if (s[k] && typeof s[k] === 'object' && !Array.isArray(s[k]) && d[k] && typeof d[k] === 'object') d[k] = Object.assign({}, d[k], s[k]);
     else d[k] = s[k];
   });
-  // 시트에 저장된 작업사양이 현재 총정리 발주와 어긋난 경우 잘못된 제품명·규격을 인쇄하지 않는다.
-  // 작업 전용 사양은 남겨 검토할 수 있게 하되, 불일치를 표시한다.
-  var orderItem=String((g.main||{})['품목']||'').trim();
-  var orderSize=String((g.main||{})['스펙']||'').trim();
-  d._mismatches=[];
-  if(orderItem && d.제품명 && String(d.제품명).trim()!==orderItem){d._mismatches.push('제품명'); d.제품명=orderItem;}
-  if(orderSize && d.제품규격 && String(d.제품규격).trim()!==orderSize){d._mismatches.push('제품규격'); d.제품규격=orderSize;}
-  if(orderItem && !d.제품명)d.제품명=orderItem;
-  if(orderSize && !d.제품규격)d.제품규격=orderSize;
-  if((g.main||{})['수량']!=='' && (g.main||{})['수량']!=null){
-    var oq=String((g.main||{})['수량']).replace(/,/g,'').trim(), sq=String(d.발주량||'').replace(/,/g,'').trim();
-    if(sq && oq && sq!==oq)d._mismatches.push('발주수량');
-    if(oq)d.발주량=(g.main||{})['수량'];
-  }
+  // 원본 작업사양을 절대로 임의로 바꾸지 않습니다. 사용자가 팝업에서 고르기 전에는 항상 입력한 값 우선.
+  d._mismatches = specDiffs(g, d).map(function(x){return x.label;});
   if (!Array.isArray(d.인쇄.색상)) d.인쇄.색상 = [];
   while (d.인쇄.색상.length < 10) d.인쇄.색상.push('');
   if (!Array.isArray(d.인쇄.별색)) d.인쇄.별색 = [];
@@ -9963,7 +10015,7 @@ function ensureSpecImg(g) { return loadSpecImg(specOf(g).도안); }
 function woModel(g, fac) {
   var sp = specOf(g), R = [], rev = woRev(g);
   // 공정 작업사양이 다른 제품에서 복사된 것으로 의심되는 경우 인쇄본에 확인 경고를 표시한다.
-  var specWarning = (sp._mismatches||[]).length ? '확인 필요: 저장된 작업사양의 '+sp._mismatches.join('·')+'이 총정리 발주와 달라 발주값을 우선 표시했습니다. 작업사양 검토 후 발송하세요.' : '';
+  var specWarning = (sp._mismatches||[]).length ? '확인 필요: 저장된 작업사양의 '+sp._mismatches.join('·')+'이 총정리 발주와 다릅니다. 사양 통합 확인 버튼에서 최종 값을 선택해주세요.' : '';
   function L(t, c, r, cls) { return { k: 'L', t: t == null ? '' : String(t), c: c || 1, r: r || 1, cls: cls || '' }; }
   function V(t, c, r, cls) { return { k: 'V', t: t == null ? '' : String(t), c: c || 1, r: r || 1, cls: cls || '' }; }
   function row(h, cells) { R.push({ h: h, cells: cells }); }
